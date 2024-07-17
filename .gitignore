@@ -6,3 +6,12 @@
 ./__pycache__
 ./6people.png
 ./6people.pt
+
+Dataset
+IMU_results
+video_results
+Synchronized_Dataset
+Segmented_Dataset
+__pycache__
+6people.png
+6people.pt
