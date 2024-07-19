@@ -82,15 +82,56 @@ action_cut_time_dict = {'linger': 5, 'massaging': 2, 'patting': 3,
 # _________________________________________________________________________________________________________________________
 # _________________________________________________________________________________________________________________________
 
+video1_filenames = []
+video2_filenames = []
+imu_filenames = []
 
-imu_files_names = os.listdir(os.path.join(path, sub_folders[0]))
-print(f'\n{imu_files_names[:10]}')
-print(f'{len(imu_files_names)}')
+trials = os.listdir(path)
+for trial in sorted(trials):
+    # imu_names = sorted([f'{trial}_{f}' for f in os.listdir(os.path.join(path, trial, sub_folders[0]))])
+    # video_names1 = sorted([f'{trial}_{f}' for f in os.listdir(os.path.join(path, trial, sub_folders[1]))])
+    # video_names2 = sorted([f'{trial}_{f}' for f in os.listdir(os.path.join(path, trial, sub_folders[2]))])
+    imu_names = sorted([os.path.join(path, trial, sub_folders[0], f) for f in os.listdir(os.path.join(path, trial, sub_folders[0]))])
+    video_names1 = sorted([os.path.join(path, trial, sub_folders[1], f) for f in os.listdir(os.path.join(path, trial, sub_folders[1]))])
+    video_names2 = sorted([os.path.join(path, trial, sub_folders[2], f) for f in os.listdir(os.path.join(path, trial, sub_folders[2]))])
 
-cam1_files_names = os.listdir(os.path.join(path, sub_folders[1]))
+    imu_filenames.extend(imu_names)
+    video1_filenames.extend(video_names1)
+    video2_filenames.extend(video_names2)
+
+
+
+print(f'\n{video1_filenames[:10]}')
+print(f'{len(video1_filenames)}')
+
+print(f'\n{video2_filenames[:10]}')
+print(f'{len(video2_filenames)}')
+
+print(f'\n{imu_filenames[:10]}')
+print(f'{len(imu_filenames)}')
+
+# Check that they are the same and no duplicates
+assert len(video1_filenames) == len(video2_filenames) == len(imu_filenames)
+assert len(video1_filenames) == len(set(video1_filenames)) == len(set(video2_filenames)) == len(set(imu_filenames)) 
+
+for i in range(len(video1_filenames)):
+    tmp_vid1_name = '_'.join(os.path.basename(video1_filenames[i]).split('_')[:-1])
+    tmp_vid2_name = '_'.join(os.path.basename(video2_filenames[i]).split('_')[:-1])
+    tmp_imu_name = '_'.join(os.path.basename(imu_filenames[i]).split('_')[:-1])
+
+    tmp_vid1_dir = '/'.join(os.path.dirname(video1_filenames[i]).split('/')[:-1])
+    tmp_vid2_dir = '/'.join(os.path.dirname(video2_filenames[i]).split('/')[:-1])
+    tmp_imu_dir = '/'.join(os.path.dirname(imu_filenames[i]).split('/')[:-1])
+
+    print(f'\n{tmp_vid1_dir}')
+    print(f'{tmp_vid1_name=}, {tmp_vid2_name=}', f'{tmp_imu_name=}')
+    assert tmp_vid1_name == tmp_vid2_name == tmp_imu_name
+    assert tmp_vid1_dir == tmp_vid2_dir == tmp_imu_dir
+
+# cam1_files_names = os.listdir(os.path.join(path, sub_folders[1]))
 start_time = time.time()
-for i in range(32):
-    np.load(os.path.join(path, sub_folders[1], cam1_files_names[i]))
+for i in range(len(video1_filenames)):
+    np.load(video1_filenames[i])
 print(f'\n{time.time() - start_time}')
 
 exit()

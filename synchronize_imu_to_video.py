@@ -66,7 +66,7 @@ action_names = ['linger', 'massaging', 'patting',
 
 sensor_names = ['1', '2', 'imu_data']
 
-specific_trial = 5
+specific_trial = 6
 
 dir_content = os.listdir(dataset_path)
 

@@ -1,20 +1,26 @@
 import numpy as np
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset, Sampler
+import torch
 import cv2 
 
 
 # Early stopping class
 class EarlyStopper:
-    def __init__(self, patience=1, min_delta=0):
+    def __init__(self, saving_path, patience=1, min_delta=0):
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
         self.min_validation_loss = float('inf')
+        self.best_model_state_dict = None
+        self.saving_path = saving_path
 
-    def early_stop(self, validation_loss):
+    def early_stop(self, validation_loss, model_state_dict):
         if validation_loss < self.min_validation_loss:
             self.min_validation_loss = validation_loss
+            self.best_model_state_dict = model_state_dict
+            print(f'Saving model to {self.saving_path}')
+            torch.save(self.best_model_state_dict, self.saving_path)
             self.counter = 0
         elif validation_loss > (self.min_validation_loss + self.min_delta):
             self.counter += 1
@@ -102,11 +108,10 @@ class RotateCircularPortion:
     
     def __call__(self, img):
         # Convert PIL image to NumPy array
-        img = np.array(img)
-        
+        # img = np.array(img)
+        # print(f'img max: {img.max()}')
         # Get the circular portion
-        circular_portion, mask = self.get_circular_portion(img)
-        
+        circular_portion, mask = self.get_circular_portion(img[0])
         # Generate a random angle for rotation
         
         # print(f'random_angle: {self.random_angle}')
@@ -115,13 +120,19 @@ class RotateCircularPortion:
         rotated_circular_portion = self.rotate_image(circular_portion, self.random_angle)
         
         # Overlay the rotated circular portion back onto the original image
-        img[:, :] = 0
-        img[mask == 255] = rotated_circular_portion[mask == 255]
+        img[:, :, :] = 0
+        # print(f'img max: {img.max()}')
+        # print(f'img shape: {img.shape}')
+        # print(f'img shape: {rotated_circular_portion.shape}')
+        # print(f'img shape: {mask.shape}')
+        img[0][mask == 255] = rotated_circular_portion[mask == 255]
         
         # Convert NumPy array back to PIL image
-        img = Image.fromarray(img)
-        
-        return img
+        # img = Image.fromarray(img)
+
+        # print(f'img shape: {img.shape}')
+        # print(f'img max: {img.max()}')
+        return torch.from_numpy(img)
 
     def get_circular_portion(self, image):
         # Create a mask with a filled circle

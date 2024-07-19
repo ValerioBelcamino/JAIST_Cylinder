@@ -28,7 +28,7 @@ path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset'
 
 sub_folders = ['Video1', 'Video2']
 
-which_camera = 1
+which_camera = 0
 
 do_train = True
 
@@ -42,8 +42,9 @@ max_seq_length = 0
 
 # Training and Evaluation
 num_epochs = 200
-learning_rate = 0.001
-batch_size = 16
+learning_rate = 0.00005
+batch_size = 8
+patience = 20
 
 video_augmentation = True
 
@@ -51,14 +52,14 @@ pixel_dim = 224
 patch_size = 56
 max_time = 150
 
-checkpoint_model_name = f'checkpoint_model_{sub_folders[which_camera]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps.pt'
-confusion_matrix_name = f'confusion_matrix_{sub_folders[which_camera]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps.png'
+checkpoint_model_name = f'checkpoint_model_{sub_folders[which_camera]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}aug.pt'
+confusion_matrix_name = f'confusion_matrix_{sub_folders[which_camera]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}aug.png'
 
 print(f'Saving model to {checkpoint_model_name}')
 print(f'Saving confusion matrix to {confusion_matrix_name}')
 
-checkpoit_model_name = os.path.join(path, checkpoint_model_name)
-confusion_matrix_name = os.path.join(path, confusion_matrix_name)
+# checkpoit_model_name = os.path.join(path, checkpoint_model_name)
+# confusion_matrix_name = os.path.join(path, confusion_matrix_name)
 
 
 action_names = ['linger', 'massaging', 'patting', 
@@ -130,8 +131,8 @@ X_train_names, X_test_names, Y_train_labels, Y_test_labels = train_test_split(
 print(f'\n{len(X_train_names)=}, {len(X_test_names)=}')
 print(f'{len(Y_train_labels)=}, {len(Y_test_labels)=}\n')
 
-train_dataset = VideoDatasetNPY(X_train_names, Y_train_labels, [], max_length=max_time, pixel_dim=pixel_dim)
-test_dataset = VideoDatasetNPY( X_test_names,  Y_test_labels,  [], max_length=max_time, pixel_dim=pixel_dim)
+train_dataset = VideoDatasetNPY(X_train_names, Y_train_labels, [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
+test_dataset = VideoDatasetNPY( X_test_names,  Y_test_labels,  [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
 print('Datasets Initialized\n')
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -148,31 +149,111 @@ model.to(device)
 print(f'Model moved to {device}\n')
 
 # Initialize early stopping
-early_stopping = EarlyStopper(patience=10)
+early_stopping = EarlyStopper(saving_path=os.path.join('video_results', checkpoint_model_name), patience=patience)
 
 best_model = None
 train_losses = []
 
 print('\n\n\n')
 
-video_list = []
-count = 0
 if do_train:
-    for epoch in range(1):
+    for epoch in range(num_epochs):
         model.train()
         for videos, labels in train_loader:
-            print(f'Batch {count} over {len(train_loader)}')
-            count += 1
             videos, labels = videos.to(device), labels.to(device)
 
-            for i in range(videos.shape[0]):
-                video_list.append(videos[i].cpu().numpy())
+            outputs = model(videos)
+            loss = criterion(outputs, labels)
+            
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}, Best Loss: {early_stopping.min_validation_loss:.4f}, Counter: {early_stopping.counter}')
+
+        train_losses.append(loss.item())
+
+        if early_stopping.early_stop(loss.item(), model.state_dict()):
+            print("Early stopping")
+
+            # Save the best model
+            # torch.save(early_stopping.best_model_state_dict, os.path.join('video_results', checkpoint_model_name))
+            # print(f'Model saved to {checkpoint_model_name}')
+
+            break   
+        else:
+            best_model = model.state_dict()
+            # torch.save(model.state_dict(), os.path.join('video_results', checkpoint_model_name))
+
+    # Plot train losses
+    plt.figure()
+    plt.plot(train_losses)
+    plt.title("Train Losses")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.show()
 
 
-# Compute the mean and std of the videos
-video_list = np.array(video_list)
-mean = np.mean(video_list)
-std = np.std(video_list)
+# Load the best model
+model.load_state_dict(torch.load(os.path.join('video_results', checkpoint_model_name)))
 
-print(f'{mean=}, {std=}')
+# Evaluation
+model.eval()
+y_true = []
+y_pred = []
+
+with torch.no_grad():
+    for videos, labels in test_loader:
+        videos, labels = videos.to(device), labels.to(device)
+        outputs = model(videos)
+        _, predicted = torch.max(outputs.data, 1)
+        y_true.extend(labels.cpu().numpy())
+        y_pred.extend(predicted.cpu().numpy())
+
+accuracy = accuracy_score(y_true, y_pred)
+print(f'Test Accuracy: {accuracy:.4f}')
+
+# Confusion matrix
+conf_matrix = confusion_matrix(y_true, y_pred)
+
+# Calculate precision and recall for each class
+precision = precision_score(y_true, y_pred, average=None)
+recall = recall_score(y_true, y_pred, average=None)
+
+# From the test_labels, create a dictionary with the number of samples per class
+test_labels_dict = {}
+for label in y_true:
+    if label not in test_labels_dict:
+        test_labels_dict[label] = 0
+    test_labels_dict[label] += 1
+
+# print(f'\n{test_labels_dict=}')
+
+# Normalize the confusion matrix by the number of samples per class
+# print(f'\n{conf_matrix=}')
+for i in range(conf_matrix.shape[0]):
+    # print(f'{conf_matrix[i, :]}, {test_labels_dict[i]}\n {conf_matrix[i, :] / test_labels_dict[i]}')
+    conf_matrix[i, :] = conf_matrix[i, :] / test_labels_dict[i] * 100
+# print(f'\n{conf_matrix=}')
+
+# Append precision and recall to the confusion matrix
+recall = recall * 100
+precision = precision * 100
+accuracy = accuracy * 100
+
+conf_matrix_ext = np.c_[conf_matrix, precision]
+recall_ext = np.append(recall, accuracy)  # Add a nan for the last cell in recall row
+conf_matrix_ext = np.vstack([conf_matrix_ext, recall_ext])
+
+
+# Plot extended confusion matrix
+plt.figure(figsize=(10, 8))
+sns.heatmap(conf_matrix_ext, annot=True, fmt='.2f', cmap='Blues', xticklabels= action_names + ['Recall'], yticklabels= action_names + ['Precision'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix with Precision and Recall')
+plt.savefig(os.path.join('video_results', confusion_matrix_name))
+print(f'Confusion matrix saved to {os.path.join("video_results", confusion_matrix_name)}')
+plt.show()
 exit()
+
