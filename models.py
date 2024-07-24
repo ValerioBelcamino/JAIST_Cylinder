@@ -1,4 +1,5 @@
 import torch.nn as nn
+from ViViT.vivit import ViViT
 import torch 
 import math 
 
@@ -46,3 +47,35 @@ class HAR_Transformer(nn.Module):
     def create_attention_mask(self, lengths, max_length, device):
         mask = torch.arange(max_length, device=device).expand(len(lengths), max_length) >= lengths.unsqueeze(1)
         return mask
+
+    
+class CHARberoViVit(nn.Module):
+    def __init__(self, pixel_dim, patch_size, n_classes, max_seq_len, n_features, nhead, num_encoder_layers, dim_feedforward, intermediate_dim):
+        super(CHARberoViVit, self).__init__()
+        self.ViViT_branch1 = ViViT(pixel_dim, patch_size, intermediate_dim, max_seq_len, in_channels=1)
+        self.ViViT_branch2 = ViViT(pixel_dim, patch_size, intermediate_dim, max_seq_len, in_channels=1)
+        self.HAR_Transformer_branch = HAR_Transformer(n_features, nhead, num_encoder_layers, dim_feedforward, intermediate_dim, max_seq_len)
+        self.fc = nn.Linear(3 * intermediate_dim, n_classes)
+
+    def forward(self, x1, x2, x3, lengths):
+        x1 = self.ViViT_branch1(x1)
+        x2 = self.ViViT_branch2(x2)
+        x3 = self.HAR_Transformer_branch(x3, lengths)
+        x = torch.cat((x1, x2, x3), dim=1)
+        x = self.fc(x)
+        return x
+
+
+class BicefHARlo(nn.Module):
+    def __init__(self, pixel_dim, patch_size, n_classes, max_seq_len, intermediate_dim):
+        super(BicefHARlo, self).__init__()
+        self.ViViT_branch1 = ViViT(pixel_dim, patch_size, intermediate_dim, max_seq_len, in_channels=1)
+        self.ViViT_branch2 = ViViT(pixel_dim, patch_size, intermediate_dim, max_seq_len, in_channels=1)
+        self.fc = nn.Linear(2 * intermediate_dim, n_classes)
+
+    def forward(self, x1, x2, x3, lengths):
+        x1 = self.ViViT_branch1(x1)
+        x2 = self.ViViT_branch2(x2)
+        x = torch.cat((x1, x2), dim=1)
+        x = self.fc(x)
+        return x

@@ -108,7 +108,7 @@ class RotateCircularPortion:
     
     def __call__(self, img):
         # Convert PIL image to NumPy array
-        # img = np.array(img)
+        img = np.array(img)
         # print(f'img max: {img.max()}')
         # Get the circular portion
         circular_portion, mask = self.get_circular_portion(img[0])

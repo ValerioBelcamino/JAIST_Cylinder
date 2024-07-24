@@ -90,6 +90,7 @@ class VideoDatasetNPY(Dataset):
         # print(f'{self.image_names[idx]=}')
         sequence = self.load_sequence(self.image_names[idx])
         label = self.labels[idx]
+        # return idx
         return sequence, label
 
     def load_sequence(self, action_image_names):
@@ -102,18 +103,22 @@ class VideoDatasetNPY(Dataset):
         if self.video_augmentation:
             # Apply any necessary transforms (e.g., resize, normalization)
             transform = transforms.Compose([
+                transforms.Normalize(mean=[0.03728], std=[0.0750]),  
                 RotateCircularPortion(center=(113, 104), radius=100, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
                 # CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=0),
                 # transforms.Resize((224, 224)),
                 # transforms.ToTensor(),
                 # transforms.Grayscale(num_output_channels=1),    
-                transforms.Normalize(mean=[0.03728], std=[0.0750]),  
                 # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
             ])
 
-            new_sequence = [transform(sequence[i]) for i in range(sequence.shape[0])]
+            # new_sequence = [transform(sequence[i]) for i in range(sequence.shape[0])]
+            new_sequence = [torch.from_numpy(sequence[i]) for i in range(sequence.shape[0])]
             # sequence = [torch.from_numpy(sequence[i]) for i in range(sequence.shape[0])]
         else:
+            transform = transforms.Compose([  
+                transforms.Normalize(mean=[0.03728], std=[0.0750]),  
+            ])
             for i in range(sequence.shape[0]):
                 new_sequence.append(transform(torch.from_numpy(sequence[i])))
 
