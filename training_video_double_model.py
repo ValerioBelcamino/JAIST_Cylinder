@@ -29,7 +29,7 @@ path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset'
 
 sub_folders = ['Video1', 'Video2']
 
-do_train = True
+do_train = False
 
 # Seed for reproducibility
 np.random.seed(0)
@@ -45,7 +45,7 @@ intermediate_dim = 64
 
 # Training and Evaluation
 num_epochs = 200
-learning_rate = 0.00001
+learning_rate = 0.0001
 batch_size = 8
 patience = 10
 
@@ -162,16 +162,16 @@ print(f'{len(Y_train_labels)=}, {len(Y_test_labels)=}')
 max_time = 30*max(action_cut_time_dict.values())
 
 # Create the video datasets
-train_dataset_video1 = VideoDatasetNPY(X_train_video1, Y_train_labels, lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
-train_dataset_video2 = VideoDatasetNPY(X_train_video2, Y_train_labels, lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
-test_dataset_video1 = VideoDatasetNPY( X_test_video1,  Y_test_labels,  lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
-test_dataset_video2 = VideoDatasetNPY( X_test_video2,  Y_test_labels,  lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
+train_dataset_video1 = VideoDatasetNPY(X_train_video1, Y_train_labels, [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
+train_dataset_video2 = VideoDatasetNPY(X_train_video2, Y_train_labels, [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
+test_dataset_video1 = VideoDatasetNPY( X_test_video1,  Y_test_labels,  [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
+test_dataset_video2 = VideoDatasetNPY( X_test_video2,  Y_test_labels,  [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
 print('Datasets Initialized\n')
 
 # Create a sampler with a seed to synchronize the dataset loaders
 seed = 42
-sampler_train = SeededRandomSampler(train_dataset_imu, seed)
-sampler_test = SeededRandomSampler(test_dataset_imu, seed)
+sampler_train = SeededRandomSampler(train_dataset_video1, seed)
+sampler_test = SeededRandomSampler(test_dataset_video1, seed)
 
 # Create the training data loaders for the imu and video datasets
 train_loader_video1 = DataLoader(train_dataset_video1, batch_size=batch_size, sampler=sampler_train)

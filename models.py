@@ -73,7 +73,7 @@ class BicefHARlo(nn.Module):
         self.ViViT_branch2 = ViViT(pixel_dim, patch_size, intermediate_dim, max_seq_len, in_channels=1)
         self.fc = nn.Linear(2 * intermediate_dim, n_classes)
 
-    def forward(self, x1, x2, x3, lengths):
+    def forward(self, x1, x2):
         x1 = self.ViViT_branch1(x1)
         x2 = self.ViViT_branch2(x2)
         x = torch.cat((x1, x2), dim=1)

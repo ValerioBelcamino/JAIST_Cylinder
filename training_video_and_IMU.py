@@ -45,22 +45,16 @@ intermediate_dim = 64
 
 # Training and Evaluation
 num_epochs = 200
-learning_rate = 0.00001
-batch_size = 8
+learning_rate = 0.0001
+batch_size = 16
 patience = 10
 
-video_augmentation = True
+video_augmentation = False
 
 pixel_dim = 224
 patch_size = 56
 max_time = 150
-n_features = 72
 
-checkpoint_model_name = f'checkpoint_model_IMUdoubleVideo_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
-confusion_matrix_name = f'confusion_matrix_IMUdoubleVideo_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
-
-print(f'Saving model to {checkpoint_model_name}')
-print(f'Saving confusion matrix to {confusion_matrix_name}')
 
 # checkpoit_model_name = os.path.join(path, checkpoint_model_name)
 # confusion_matrix_name = os.path.join(path, confusion_matrix_name)
@@ -80,6 +74,30 @@ action_cut_time_dict = {'linger': 5, 'massaging': 2, 'patting': 3,
                         'push': 4, 'rub': 2, 'scratching': 2,
                         'shaking': 2, 'squeeze': 4, 'stroke': 3,
                         'tapping': 2, 'trembling': 2}
+                        
+all_imus = [0, 1, 2, 3, 4, 5, 6, 7]
+tips_and_back = [0, 1, 3, 5]
+tips_and_wrist = [7, 1, 3, 5]
+
+tips_only = [1, 3, 5]
+thumb_index_tips_only = [1, 5]
+thumb_index_back = [0, 1, 5]
+
+back_and_wrist = [0, 7]
+thumb_and_index = [1, 2, 5, 6]
+
+sensor_conf = thumb_and_index
+sensor_conf_name = 'thumb_and_index'
+n_features = 8 * len(sensor_conf)
+
+
+
+checkpoint_model_name = f'checkpoint_model_IMUdoubleVideo_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
+confusion_matrix_name = f'confusion_matrix_IMUdoubleVideo_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
+
+print(f'Saving model to {checkpoint_model_name}')
+print(f'Saving confusion matrix to {confusion_matrix_name}')
+
 
 
 # _________________________________________________________________________________________________________________________
@@ -181,8 +199,8 @@ print(f'{len(lengths_train)=}, {len(lengths_test)=}\n')
 
 
 # Create the imu datasets
-train_dataset_imu = SequenceDatasetNPY(X_train_imu, Y_train_labels, lengths_train)
-test_dataset_imu = SequenceDatasetNPY(X_test_imu, Y_test_labels, lengths_test)
+train_dataset_imu = SequenceDatasetNPY(X_train_imu, Y_train_labels, lengths_train, IMU_conf=sensor_conf)
+test_dataset_imu = SequenceDatasetNPY(X_test_imu, Y_test_labels, lengths_test, IMU_conf=sensor_conf)
 
 # Set max time using the dictionary times 30 fps to pad the videos
 max_time = 30*max(action_cut_time_dict.values())

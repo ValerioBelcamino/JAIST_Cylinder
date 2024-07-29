@@ -211,3 +211,40 @@ class SeededRandomSampler(Sampler):
 
     def __len__(self):
         return len(self.data_source)
+
+
+    
+def create_confusion_matrix_w_precision_recall(y_true, y_pred):
+    # Confusion matrix
+    conf_matrix = confusion_matrix(y_true, y_pred)
+
+    # Calculate precision and recall for each class
+    precision = precision_score(y_true, y_pred, average=None)
+    recall = recall_score(y_true, y_pred, average=None)
+
+    # From the test_labels, create a dictionary with the number of samples per class
+    test_labels_dict = {}
+    for label in y_true:
+        if label not in test_labels_dict:
+            test_labels_dict[label] = 0
+        test_labels_dict[label] += 1
+
+    # print(f'\n{test_labels_dict=}')
+
+    # Normalize the confusion matrix by the number of samples per class
+    # print(f'\n{conf_matrix=}')
+    for i in range(conf_matrix.shape[0]):
+        # print(f'{conf_matrix[i, :]}, {test_labels_dict[i]}\n {conf_matrix[i, :] / test_labels_dict[i]}')
+        conf_matrix[i, :] = conf_matrix[i, :] / test_labels_dict[i] * 100
+    # print(f'\n{conf_matrix=}')
+
+    # Append precision and recall to the confusion matrix
+    recall = recall * 100
+    precision = precision * 100
+    accuracy = accuracy * 100
+
+    conf_matrix_ext = np.c_[conf_matrix, recall]
+    recall_ext = np.append(precision, accuracy)  # Add a nan for the last cell in recall row
+    conf_matrix_ext = np.vstack([conf_matrix_ext, recall_ext])
+
+    return conf_matrix_ext

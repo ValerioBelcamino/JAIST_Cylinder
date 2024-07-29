@@ -3,13 +3,12 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 import numpy as np
-from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 from models import HAR_Transformer
 from sequence_dataset import SequenceDataset
-from utils import EarlyStopper, do_cut_actions, do_pad_stranded_sequencies
+from utils import EarlyStopper, do_cut_actions, do_pad_stranded_sequencies, create_confusion_matrix_with_precision_recall
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
@@ -43,8 +42,8 @@ max_seq_length = 0
 
 # Training and Evaluation
 num_epochs = 100
-learning_rate = 0.0005
-batch_size = 32
+learning_rate = 0.00005
+batch_size = 16
 patience = 10
 
 
@@ -227,7 +226,7 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 
 # Initialize early stopping
-early_stopping = EarlyStopper(patience=patience)
+early_stopping = EarlyStopper(saving_path=os.path.join('IMU_results', checkpoint_model_name), patience=patience)
 
 best_model = None
 train_losses = []
@@ -250,11 +249,11 @@ if do_train:
 
         train_losses.append(loss.item())
 
-        if early_stopping.early_stop(loss.item()):
+        if early_stopping.early_stop(loss.item(), model.state_dict()):
             print("Early stopping")
 
             # Save the best model
-            torch.save(model.state_dict(), os.path.join('IMU_results', checkpoint_model_name))
+            # torch.save(model.state_dict(), os.path.join('IMU_results', checkpoint_model_name))
 
             break
         else:
@@ -293,37 +292,45 @@ with torch.no_grad():
 accuracy = accuracy_score(y_true, y_pred)
 print(f'Test Accuracy: {accuracy:.4f}')
 
-# Confusion matrix
-conf_matrix = confusion_matrix(y_true, y_pred)
+# Confusion matrix with precision and recall
+conf_matrix_ext = create_confusion_matrix_with_precision_recall(y_true, y_pred)
 
-# Calculate precision and recall for each class
-precision = precision_score(y_true, y_pred, average=None)
-recall = recall_score(y_true, y_pred, average=None)
+# Compute F1 score using scikit-learn
+f1 = f1_score(y_true, y_pred, average='macro')
+print(f'F1 Score: {f1:.4f}')
 
-# From the test_labels, create a dictionary with the number of samples per class
-test_labels_dict = {}
-for label in y_true:
-    if label not in test_labels_dict:
-        test_labels_dict[label] = 0
-    test_labels_dict[label] += 1
 
-# print(f'\n{test_labels_dict=}')
+# # Confusion matrix
+# conf_matrix = confusion_matrix(y_true, y_pred)
 
-# Normalize the confusion matrix by the number of samples per class
-# print(f'\n{conf_matrix=}')
-for i in range(conf_matrix.shape[0]):
-    # print(f'{conf_matrix[i, :]}, {test_labels_dict[i]}\n {conf_matrix[i, :] / test_labels_dict[i]}')
-    conf_matrix[i, :] = conf_matrix[i, :] / test_labels_dict[i] * 100
-# print(f'\n{conf_matrix=}')
+# # Calculate precision and recall for each class
+# precision = precision_score(y_true, y_pred, average=None)
+# recall = recall_score(y_true, y_pred, average=None)
 
-# Append precision and recall to the confusion matrix
-recall = recall * 100
-precision = precision * 100
-accuracy = accuracy * 100
+# # From the test_labels, create a dictionary with the number of samples per class
+# test_labels_dict = {}
+# for label in y_true:
+#     if label not in test_labels_dict:
+#         test_labels_dict[label] = 0
+#     test_labels_dict[label] += 1
 
-conf_matrix_ext = np.c_[conf_matrix, recall]
-recall_ext = np.append(precision, accuracy)  # Add a nan for the last cell in recall row
-conf_matrix_ext = np.vstack([conf_matrix_ext, recall_ext])
+# # print(f'\n{test_labels_dict=}')
+
+# # Normalize the confusion matrix by the number of samples per class
+# # print(f'\n{conf_matrix=}')
+# for i in range(conf_matrix.shape[0]):
+#     # print(f'{conf_matrix[i, :]}, {test_labels_dict[i]}\n {conf_matrix[i, :] / test_labels_dict[i]}')
+#     conf_matrix[i, :] = conf_matrix[i, :] / test_labels_dict[i] * 100
+# # print(f'\n{conf_matrix=}')
+
+# # Append precision and recall to the confusion matrix
+# recall = recall * 100
+# precision = precision * 100
+# accuracy = accuracy * 100
+
+# conf_matrix_ext = np.c_[conf_matrix, recall]
+# recall_ext = np.append(precision, accuracy)  # Add a nan for the last cell in recall row
+# conf_matrix_ext = np.vstack([conf_matrix_ext, recall_ext])
 
 
 # Plot extended confusion matrix
@@ -332,5 +339,5 @@ sns.heatmap(conf_matrix_ext, annot=True, fmt='.2f', cmap='Blues', xticklabels= a
 plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.title('Confusion Matrix with Precision and Recall')
-plt.savefig(os.path.join('IMU_results', confusion_matrix_name))
+plt.savefig(os.path.join('IMU_results', confusion_matrix_name.split('.')[0] + f'_f1:{f1}.png'))
 plt.show()

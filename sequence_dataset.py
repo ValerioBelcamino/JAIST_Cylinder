@@ -20,11 +20,12 @@ class SequenceDataset(Dataset):
         return idx, self.sequences[idx], self.labels[idx], self.lengths[idx]
 
 class SequenceDatasetNPY(Dataset):
-    def __init__(self, sequences, labels, lengths, max_len = 150):
+    def __init__(self, sequences, labels, lengths, max_len = 150, IMU_conf = None):
         self.sequences = sequences
         self.labels = labels
         self.lengths = lengths
         self.max_len = max_len
+        self.IMU_conf = IMU_conf
 
     def __len__(self):
         return len(self.sequences)
@@ -38,7 +39,19 @@ class SequenceDatasetNPY(Dataset):
         return self.pad_sequence(self.sequences[idx]), self.labels[idx], self.lengths[idx]
 
     def pad_sequence(self, sequence_name):
-        sequence = np.load(sequence_name)
+        if self.IMU_conf is None or len(self.IMU_conf) == 8:
+            sequence = np.load(sequence_name)
+        else: 
+            sequence_temp = np.load(sequence_name)
+            columns_to_keep = []
+            for index in self.IMU_conf:
+                start = index * 8
+                end = start + 8
+                columns_to_keep.extend(range(start, end))
+            columns_to_keep = np.array(columns_to_keep)
+            sequence = sequence_temp[:, columns_to_keep]
+
+
         if sequence.shape[0] < self.max_len:
             zeros = np.zeros((self.max_len, sequence.shape[1]), dtype=np.float32)
             zeros[:sequence.shape[0], :] = sequence
