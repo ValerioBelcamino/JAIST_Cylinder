@@ -5,10 +5,10 @@ from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 from video_dataset import VideoDatasetNPY
 from sequence_dataset import SequenceDatasetNPY
-from utils import EarlyStopper, play_video, SeededRandomSampler
+from utils import EarlyStopper, play_video, SeededRandomSampler, create_confusion_matrix_w_precision_recall
 import matplotlib.pyplot as plt
 from models import CHARberoViVit
 import seaborn as sns
@@ -29,7 +29,7 @@ path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset'
 
 sub_folders = ['Video1', 'Video2', 'IMU']
 
-do_train = True
+do_train = False
 
 # Seed for reproducibility
 np.random.seed(0)
@@ -86,14 +86,18 @@ thumb_index_back = [0, 1, 5]
 back_and_wrist = [0, 7]
 thumb_and_index = [1, 2, 5, 6]
 
-sensor_conf = thumb_and_index
-sensor_conf_name = 'thumb_and_index'
-n_features = 8 * len(sensor_conf)
+sensor_conf = all_imus
+sensor_conf_name = 'all_imus'
+n_features = 8 * (len(sensor_conf) + 1)
+print(f'{n_features=}')
 
 
 
-checkpoint_model_name = f'checkpoint_model_IMUdoubleVideo_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
-confusion_matrix_name = f'confusion_matrix_IMUdoubleVideo_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
+# checkpoint_model_name = f'checkpoint_model_IMUdoubleVideo_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
+# confusion_matrix_name = f'confusion_matrix_IMUdoubleVideo_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
+
+checkpoint_model_name = f'checkpoint_model_IMUdoubleVideo_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
+confusion_matrix_name = f'confusion_matrix_IMUdoubleVideo_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
 
 print(f'Saving model to {checkpoint_model_name}')
 print(f'Saving confusion matrix to {confusion_matrix_name}')
@@ -304,7 +308,7 @@ print(f'Model initialized on {device}\n')
 
 
 # Initialize early stopping
-early_stopping = EarlyStopper(saving_path=os.path.join('video_results', checkpoint_model_name), patience=patience)
+early_stopping = EarlyStopper(saving_path=os.path.join('video_imu_results', checkpoint_model_name), patience=patience)
 
 best_model = None
 train_losses = []
@@ -354,7 +358,7 @@ if do_train:
 
 
 # Load the best model
-model.load_state_dict(torch.load(os.path.join('video_results', checkpoint_model_name)))
+model.load_state_dict(torch.load(os.path.join('video_imu_results', checkpoint_model_name)))
 
 # Evaluation
 model.eval()
@@ -378,47 +382,19 @@ with torch.no_grad():
 accuracy = accuracy_score(y_true, y_pred)
 print(f'Test Accuracy: {accuracy:.4f}')
 
-# Confusion matrix
-conf_matrix = confusion_matrix(y_true, y_pred)
+# Confusion matrix with precision and recall
+conf_matrix_ext = create_confusion_matrix_w_precision_recall(y_true, y_pred, accuracy)
 
-# Calculate precision and recall for each class
-precision = precision_score(y_true, y_pred, average=None)
-recall = recall_score(y_true, y_pred, average=None)
-
-# From the test_labels, create a dictionary with the number of samples per class
-test_labels_dict = {}
-for label in y_true:
-    if label not in test_labels_dict:
-        test_labels_dict[label] = 0
-    test_labels_dict[label] += 1
-
-# print(f'\n{test_labels_dict=}')
-
-# Normalize the confusion matrix by the number of samples per class
-# print(f'\n{conf_matrix=}')
-for i in range(conf_matrix.shape[0]):
-    # print(f'{conf_matrix[i, :]}, {test_labels_dict[i]}\n {conf_matrix[i, :] / test_labels_dict[i]}')
-    conf_matrix[i, :] = conf_matrix[i, :] / test_labels_dict[i] * 100
-# print(f'\n{conf_matrix=}')
-
-# Append precision and recall to the confusion matrix
-recall = recall * 100
-precision = precision * 100
-accuracy = accuracy * 100
-
-conf_matrix_ext = np.c_[conf_matrix, precision]
-recall_ext = np.append(recall, accuracy)  # Add a nan for the last cell in recall row
-conf_matrix_ext = np.vstack([conf_matrix_ext, recall_ext])
+# Compute F1 score using scikit-learn
+f1 = f1_score(y_true, y_pred, average='macro')
+print(f'F1 Score: {f1:.4f}')
 
 
 # Plot extended confusion matrix
-plt.figure(figsize=(10, 8))
+plt.figure(figsize=(16, 9))
 sns.heatmap(conf_matrix_ext, annot=True, fmt='.2f', cmap='Blues', xticklabels= action_names + ['Recall'], yticklabels= action_names + ['Precision'])
 plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.title('Confusion Matrix with Precision and Recall')
-plt.savefig(os.path.join('video_results', confusion_matrix_name))
-print(f'Confusion matrix saved to {os.path.join("video_results", confusion_matrix_name)}')
+plt.savefig(os.path.join('video_imu_results', confusion_matrix_name.split('.')[0] + f'_f1:{f1}.png'))
 plt.show()
-exit()
-

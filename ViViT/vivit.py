@@ -85,14 +85,15 @@ class ViViT(nn.Module):
 if __name__ == "__main__":
     
     img = torch.ones([1, 16, 3, 224, 224]).cuda()
-    
     model = ViViT(224, 16, 100, 16).cuda()
+    
     parameters = filter(lambda p: p.requires_grad, model.parameters())
     parameters = sum([np.prod(p.size()) for p in parameters]) / 1_000_000
     print('Trainable Parameters: %.3fM' % parameters)
     
+    init_time = time.time()
     out = model(img)
-    
+    print("Time taken for a single image: ", time.time()-init_time)
     print("Shape of out :", out.shape)      # [B, num_classes]
 
     

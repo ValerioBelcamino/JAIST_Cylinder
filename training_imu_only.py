@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 from models import HAR_Transformer
 from sequence_dataset import SequenceDataset
-from utils import EarlyStopper, do_cut_actions, do_pad_stranded_sequencies, create_confusion_matrix_with_precision_recall
+from utils import EarlyStopper, do_cut_actions, do_pad_stranded_sequencies, create_confusion_matrix_w_precision_recall
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
@@ -24,7 +24,7 @@ import os
 # General variables
 
 path = '/home/s2412003/Shared/JAIST_Cylinder/Synchronized_Dataset'
-do_train = True
+do_train = False
 do_plot = False
 
 # Seed for reproducibility
@@ -42,8 +42,8 @@ max_seq_length = 0
 
 # Training and Evaluation
 num_epochs = 100
-learning_rate = 0.00005
-batch_size = 16
+learning_rate = 0.0005
+batch_size = 32
 patience = 10
 
 
@@ -80,8 +80,8 @@ thumb_index_back = [0, 1, 5]
 back_and_wrist = [0, 7]
 thumb_and_index = [1, 2, 5, 6]
 
-sensor_conf = all_imus
-sensor_conf_name = 'all_imus'
+sensor_conf = thumb_index_back
+sensor_conf_name = 'thumb_index_back'
 
 feature_conf = [x for x in range(9)]
 
@@ -293,7 +293,7 @@ accuracy = accuracy_score(y_true, y_pred)
 print(f'Test Accuracy: {accuracy:.4f}')
 
 # Confusion matrix with precision and recall
-conf_matrix_ext = create_confusion_matrix_with_precision_recall(y_true, y_pred)
+conf_matrix_ext = create_confusion_matrix_w_precision_recall(y_true, y_pred, accuracy)
 
 # Compute F1 score using scikit-learn
 f1 = f1_score(y_true, y_pred, average='macro')

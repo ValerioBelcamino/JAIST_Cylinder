@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset, Sampler
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, accuracy_score
 import torch
 import cv2 
 
@@ -165,7 +166,7 @@ class CutBlackContour:
         img = np.array(img)
         # print(f'image shape: {img.shape}')
 
-        img = img[:, self.left_margin:-self.right_margin]
+        img = img[self.top_margin:img.shape[0]-self.bottom_margin, self.left_margin:img.shape[1]-self.right_margin]
         # print(f'image shape: {img.shape}')
         return Image.fromarray(img)
 
@@ -214,7 +215,7 @@ class SeededRandomSampler(Sampler):
 
 
     
-def create_confusion_matrix_w_precision_recall(y_true, y_pred):
+def create_confusion_matrix_w_precision_recall(y_true, y_pred, accuracy):
     # Confusion matrix
     conf_matrix = confusion_matrix(y_true, y_pred)
 
