@@ -7,54 +7,54 @@ import numpy as np
 
 # Define the custom transform class
 
-import matplotlib.pyplot as plt
-import pandas as pd
+# import matplotlib.pyplot as plt
+# import pandas as pd
 
-# Example data (replace these with your actual data)
-classified_actions = [
-    ('Class1', 1, 5),
-    ('Class2', 6, 10),
-    # Add more entries as needed
-]
+# # Example data (replace these with your actual data)
+# classified_actions = [
+#     ('Class1', 1, 5),
+#     ('Class2', 6, 10),
+#     # Add more entries as needed
+# ]
 
-ground_truth_actions = [
-    ('Class1', 1, 5),
-    ('Class3', 6, 10),
-    # Add more entries as needed
-]
+# ground_truth_actions = [
+#     ('Class1', 1, 5),
+#     ('Class3', 6, 10),
+#     # Add more entries as needed
+# ]
 
-# Create DataFrames
-classified_df = pd.DataFrame(classified_actions, columns=['Class', 'Start_Time', 'End_Time'])
-ground_truth_df = pd.DataFrame(ground_truth_actions, columns=['Class', 'Start_Time', 'End_Time'])
+# # Create DataFrames
+# classified_df = pd.DataFrame(classified_actions, columns=['Class', 'Start_Time', 'End_Time'])
+# ground_truth_df = pd.DataFrame(ground_truth_actions, columns=['Class', 'Start_Time', 'End_Time'])
 
-# Plot
-fig, ax = plt.subplots(figsize=(12, 6))
+# # Plot
+# fig, ax = plt.subplots(figsize=(12, 6))
 
-# Plot classified actions
-for i, row in classified_df.iterrows():
-    ax.plot([row['Start_Time'], row['End_Time']], [1, 1], label=row['Class'], color='blue', linewidth=50, alpha=0.6)
+# # Plot classified actions
+# for i, row in classified_df.iterrows():
+#     ax.plot([row['Start_Time'], row['End_Time']], [1, 1], label=row['Class'], color='blue', linewidth=50, alpha=0.6)
 
-# Plot ground truth actions
-for i, row in ground_truth_df.iterrows():
-    ax.plot([row['Start_Time'], row['End_Time']], [1.5, 1.5], label=row['Class'], color='green', linewidth=50, alpha=0.6)
+# # Plot ground truth actions
+# for i, row in ground_truth_df.iterrows():
+#     ax.plot([row['Start_Time'], row['End_Time']], [1.5, 1.5], label=row['Class'], color='green', linewidth=50, alpha=0.6)
 
-# Add text labels
-for i, row in classified_df.iterrows():
-    ax.text((row['Start_Time'] + row['End_Time']) / 2, 1, row['Class'], ha='center', va='center', color='white')
+# # Add text labels
+# for i, row in classified_df.iterrows():
+#     ax.text((row['Start_Time'] + row['End_Time']) / 2, 1, row['Class'], ha='center', va='center', color='white')
 
-for i, row in ground_truth_df.iterrows():
-    ax.text((row['Start_Time'] + row['End_Time']) / 2, 1.5, row['Class'], ha='center', va='center', color='white')
+# for i, row in ground_truth_df.iterrows():
+#     ax.text((row['Start_Time'] + row['End_Time']) / 2, 1.5, row['Class'], ha='center', va='center', color='white')
 
-# Customize plot
-ax.set_yticks([1, 1.5])
-ax.set_ylim(0.5, 2)
-ax.set_yticklabels(['Classified', 'Ground Truth'])
-ax.set_xlabel('Time')
-ax.set_title('Comparison of Classified Actions and Ground Truth')
-ax.grid(True)
+# # Customize plot
+# ax.set_yticks([1, 1.5])
+# ax.set_ylim(0.5, 2)
+# ax.set_yticklabels(['Classified', 'Ground Truth'])
+# ax.set_xlabel('Time')
+# ax.set_title('Comparison of Classified Actions and Ground Truth')
+# ax.grid(True)
 
-plt.show()
-exit()
+# plt.show()
+# exit()
 
 # Define the transform pipeline
 transform = transforms.Compose([

@@ -38,7 +38,7 @@ patch_size = 56
 max_time = 150
 n_features = 72
 
-which_model = 'videos'
+which_model = 'imu'
 
 
 
@@ -169,9 +169,9 @@ for lab in labels_list:
     print('Moved windows to device\n')
 
     # Put the first elements in the windows
-    video1_window[0,-1] = video1_tensor[0]
-    video2_window[0,-1] = video2_tensor[0]
-    imu_window[0,-1] = imu_tensor[0]
+    video1_window[:, -1, :, :, :] = video1_tensor[0, :, :, :]
+    video2_window[:, -1, :, :, :] = video2_tensor[0, :, :, :]
+    imu_window[:, -1, :] = imu_tensor[0, :]
     print('First elements in windows\n')
 
 
@@ -203,9 +203,9 @@ for lab in labels_list:
         imu_window = torch.roll(imu_window, shifts=-1, dims=1)
 
         # Put the new elements in the windows
-        video1_window[0,-1] = video1_tensor[i]
-        video2_window[0,-1] = video2_tensor[i]
-        imu_window[0,-1] = imu_tensor[i]
+        video1_window[:, -1, :, :, :] = video1_tensor[i, :, :, :]
+        video2_window[:, -1, :, :, :] = video2_tensor[i, :, :, :]
+        imu_window[:, -1, :] = imu_tensor[i, :]
 
         window_pad_video = torch.zeros((max_time-lenn, 1, pixel_dim, pixel_dim)).unsqueeze(0).to(device)
         window_pad_imu = torch.zeros((max_time-lenn, n_features)).unsqueeze(0).to(device)
