@@ -34,13 +34,13 @@ class SequenceDatasetNPY(Dataset):
         # print(f'{idx=}')
         # return idx
         # print(f'{idx=}')
-        # print(f'{self.sequences[idx].shape=}')
+
         # print(f'{self.sequences[self.lengths[idx].item()+3, :]=}')
         return self.pad_sequence(self.sequences[idx]), self.labels[idx], self.lengths[idx]
 
     def pad_sequence(self, sequence_name):
         if self.IMU_conf is None or len(self.IMU_conf) == 8:
-            sequence = np.load(sequence_name)
+            sequence = np.load(sequence_name)   
         else: 
             sequence_temp = np.load(sequence_name)
             columns_to_keep = []

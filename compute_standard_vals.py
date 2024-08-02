@@ -25,11 +25,11 @@ import os
 
 # General variables
 
-path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset1'
+path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset2'
 
 sub_folders = ['Video1', 'Video2']
 
-which_camera = 1
+which_camera = 0
 
 do_train = True
 
@@ -105,7 +105,7 @@ lenghts = []
 
 for name in imu_filenames:
     name = os.path.basename(name)
-    lenghts.append(name.split('_')[3])
+    lenghts.append(name.split('_')[2])
 
 print(f'{len(video_filenames)}')
 print(f'{len(imu_filenames)}')
@@ -177,7 +177,18 @@ max_values = np.max(stacked_imus, axis=0)
 min_values = np.min(stacked_imus, axis=0)
 print(f'Maximum values per feature: {max_values}')
 print(f'Minimum values per feature: {min_values}')
-exit()
+
+# print to file these values
+
+with open(f'{os.path.basename(path)}.txt', 'w') as f:
+    f.write('\nMean\n')
+    f.write(f'{mean}')
+    f.write('\nStd\n')
+    f.write(f'{std}')
+    f.write('\nMax\n')
+    f.write(f'{max_values}')
+    f.write('\nMin\n')
+    f.write(f'{min_values}')
 
 video_list = []
 count = 0

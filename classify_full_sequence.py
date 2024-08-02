@@ -35,7 +35,7 @@ dim_feedforward = 128
 intermediate_dim = 64
 pixel_dim = 224
 patch_size = 56
-max_time = 150
+max_time = 90
 n_features = 72
 
 which_model = 'imu'
@@ -90,7 +90,7 @@ elif which_model == 'imu':
     dim_feedforward = 256
 
     model = HAR_Transformer(n_features, nhead, num_encoder_layers, dim_feedforward, len(action_names), max_time).to(device)
-    model.load_state_dict(torch.load(f'{base_path}/IMU_results/IMU_checkpoint_model_all_imus_0.0005lr_32bs.pt'))
+    model.load_state_dict(torch.load(f'{base_path}/_new_imu_results/checkpoint_model_IMU_all_imus_0.0005lr_32bs_FalseAug.pt'))
 
 elif which_model == 'videos':
     model = BicefHARlo(
@@ -175,18 +175,18 @@ for lab in labels_list:
     print('First elements in windows\n')
 
 
-    window_pad_video = torch.zeros((max_time-lenn, 1, pixel_dim, pixel_dim)).unsqueeze(0).to(device)
-    window_pad_imu = torch.zeros((max_time-lenn, n_features)).unsqueeze(0).to(device)
+    # window_pad_video = torch.zeros((max_time-lenn, 1, pixel_dim, pixel_dim)).unsqueeze(0).to(device)
+    # window_pad_imu = torch.zeros((max_time-lenn, n_features)).unsqueeze(0).to(device)
 
-    video1_window_new = torch.cat((video1_window, window_pad_video), dim=1)
-    video2_window_new = torch.cat((video2_window, window_pad_video), dim=1)
-    imu_window_new = torch.cat((imu_window, window_pad_imu), dim=1)
+    # video1_window_new = torch.cat((video1_window, window_pad_video), dim=1)
+    # video2_window_new = torch.cat((video2_window, window_pad_video), dim=1)
+    # imu_window_new = torch.cat((imu_window, window_pad_imu), dim=1)
 
     if which_model == 'both':
         outputs = model(video1_window, video2_window, imu_window, batch_length)
     elif which_model == 'imu':
         # print(f'shape: {imu_window_new.shape}')
-        outputs = model(imu_window_new, batch_length)
+        outputs = model(imu_window, batch_length)
     elif which_model == 'videos':
         outputs = model(video1_window_new, video2_window_new)
 
@@ -207,18 +207,18 @@ for lab in labels_list:
         video2_window[:, -1, :, :, :] = video2_tensor[i, :, :, :]
         imu_window[:, -1, :] = imu_tensor[i, :]
 
-        window_pad_video = torch.zeros((max_time-lenn, 1, pixel_dim, pixel_dim)).unsqueeze(0).to(device)
-        window_pad_imu = torch.zeros((max_time-lenn, n_features)).unsqueeze(0).to(device)
+        # window_pad_video = torch.zeros((max_time-lenn, 1, pixel_dim, pixel_dim)).unsqueeze(0).to(device)
+        # window_pad_imu = torch.zeros((max_time-lenn, n_features)).unsqueeze(0).to(device)
 
-        video1_window_new = torch.cat((video1_window, window_pad_video), dim=1)
-        video2_window_new = torch.cat((video2_window, window_pad_video), dim=1)
-        imu_window_new = torch.cat((imu_window, window_pad_imu), dim=1)
+        # video1_window_new = torch.cat((video1_window, window_pad_video), dim=1)
+        # video2_window_new = torch.cat((video2_window, window_pad_video), dim=1)
+        # imu_window_new = torch.cat((imu_window, window_pad_imu), dim=1)
 
         if which_model == 'both':
             outputs = model(video1_window, video2_window, imu_window, batch_length)
         elif which_model == 'imu':
             # print(f'shape: {imu_window_new.shape}')
-            outputs = model(imu_window_new, batch_length)
+            outputs = model(imu_window, batch_length)
         elif which_model == 'videos':
             outputs = model(video1_window_new, video2_window_new)
 

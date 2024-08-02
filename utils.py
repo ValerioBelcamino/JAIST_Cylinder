@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader, Dataset, Sampler
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, accuracy_score
 from torchvision import transforms
 import torch
+import os
 import cv2 
 
 
@@ -16,6 +17,8 @@ class EarlyStopper:
         self.min_validation_loss = float('inf')
         self.best_model_state_dict = None
         self.saving_path = saving_path
+        if not os.path.exists(os.path.dirname(self.saving_path)):
+            os.makedirs(os.path.dirname(self.saving_path))
 
     def early_stop(self, validation_loss, model_state_dict):
         if validation_loss < self.min_validation_loss:
