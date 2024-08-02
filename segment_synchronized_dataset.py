@@ -72,12 +72,17 @@ action_names = ['linger', 'massaging', 'patting',
 action_dict = {action: i for i, action in enumerate(action_names)}
 action_dict_inv = {i: action for i, action in enumerate(action_names)}
 
-action_cut_time_dict = {'linger': 5, 'massaging': 2, 'patting': 3,
-                        'pinching': 3, 'press': 2, 'pull': 4,
-                        'push': 4, 'rub': 2, 'scratching': 2,
-                        'shaking': 2, 'squeeze': 4, 'stroke': 3,
-                        'tapping': 2, 'trembling': 2}
+action_cut_time_dict = {'linger': 3, 'massaging': 3, 'patting': 3,
+                        'pinching': 3, 'press': 3, 'pull': 3,
+                        'push': 3, 'rub': 3, 'scratching': 3,
+                        'shaking': 3, 'squeeze': 3, 'stroke': 3,
+                        'tapping': 3, 'trembling': 3}
 
+# action_cut_time_dict = {'linger': 5, 'massaging': 2, 'patting': 3,
+#                         'pinching': 3, 'press': 2, 'pull': 4,
+#                         'push': 4, 'rub': 2, 'scratching': 2,
+#                         'shaking': 2, 'squeeze': 4, 'stroke': 3,
+#                         'tapping': 2, 'trembling': 2}
 
 # _________________________________________________________________________________________________________________________
 # _________________________________________________________________________________________________________________________
@@ -89,9 +94,12 @@ cam1_files = []
 cam2_files = []
 imu_labels = []
 
+current_trial = '2'
+saving_path = os.path.join(saving_path, current_trial)
+
 for trial_dir in os.listdir(path):
     print(trial_dir)
-    if trial_dir != '0':
+    if trial_dir != current_trial:
         continue
     for hand_dir in os.listdir(os.path.join(path, trial_dir)):
         print(f'\n')
@@ -192,9 +200,14 @@ assert padded_sequences.shape[0] == len(label_indices) == len(sequence_lengths)
 # Get max and min values per feature
 max_values = np.max(padded_sequences, axis=(0, 1))
 min_values = np.min(padded_sequences, axis=(0, 1))
-# print(f'Maximum values per feature: {max_values}')
+print(f'Maximum values per feature: {max_values}')
+print(f'Minimum values per feature: {min_values}')
 
-padded_sequences = (padded_sequences - min_values) / (max_values - min_values)
+print(f'Shape of IMU file {0}: {padded_sequences[0].shape}')
+print(f'Shape of IMU file {0}: {padded_sequences[0].dtype}')
+# print(padded_sequences[0])
+
+# padded_sequences = (padded_sequences - min_values) / (max_values - min_values)
 
 indices = np.arange(len(label_indices))
 
@@ -261,10 +274,10 @@ test_dataset_imu = SequenceDataset(X_test_imu, y_test, lengths_test)
 max_time = 30*max(action_cut_time_dict.values())
 
 # Create the video datasets
-train_dataset_video1 = VideoDataset(X_train_video1, y_train, lengths_train, max_length=max_time, pixel_dim=pixel_dim)
-train_dataset_video2 = VideoDataset(X_train_video2, y_train, lengths_train, max_length=max_time, pixel_dim=pixel_dim)
-test_dataset_video1 = VideoDataset( X_test_video1,  y_test,  lengths_train, max_length=max_time, pixel_dim=pixel_dim)
-test_dataset_video2 = VideoDataset( X_test_video2,  y_test,  lengths_train, max_length=max_time, pixel_dim=pixel_dim)
+train_dataset_video1 = VideoDataset(X_train_video1, y_train, lengths_train, max_length=max_time, pixel_dim=pixel_dim, cam_id=1)
+train_dataset_video2 = VideoDataset(X_train_video2, y_train, lengths_train, max_length=max_time, pixel_dim=pixel_dim, cam_id=2)
+test_dataset_video1 = VideoDataset( X_test_video1,  y_test,  lengths_train, max_length=max_time, pixel_dim=pixel_dim, cam_id=1)
+test_dataset_video2 = VideoDataset( X_test_video2,  y_test,  lengths_train, max_length=max_time, pixel_dim=pixel_dim, cam_id=2)
 
 
 # Create a sampler with a seed to synchronize the dataset loaders
@@ -363,15 +376,22 @@ for (imu_idx, imu_seq, imu_lab, seq_len), (vid1_idx, vid1_seq, vid1_lab), (vid2_
         assert imu_lab[i] == vid1_lab[i] == vid2_lab[i]
         # print(imu_idx[i] == vid1_idx[i] == visd2_idx[i])
 
-    # np.save(os.path.join(saving_path, 'IMU', f'{imu_idx[0]}_imu_{imu_lab[0]}_{seq_len.item()}_imu.npy'), imu_seq[0].numpy())
-    # np.save(os.path.join(saving_path, 'Video1', f'{vid1_idx[0]}_video1_{vid1_lab[0]}_{seq_len.item()}_video1.npy'), vid1_seq[0].numpy())
-    # np.save(os.path.join(saving_path, 'Video2', f'{vid2_idx[0]}_video2_{vid2_lab[0]}_{seq_len.item()}_video2.npy'), vid2_seq[0].numpy())
-    print(f'{imu_seq[0].shape=}')
-    print(f'{vid1_seq[0].shape=}')
-    print(f'{vid2_seq[0].shape=}')
+    if not os.path.exists(os.path.join(saving_path, 'IMU')):
+        os.makedirs(os.path.join(saving_path, 'IMU'))
+    if not os.path.exists(os.path.join(saving_path, 'Video1')):
+        os.makedirs(os.path.join(saving_path, 'Video1'))
+    if not os.path.exists(os.path.join(saving_path, 'Video2')):
+        os.makedirs(os.path.join(saving_path, 'Video2'))
+
+    np.save(os.path.join(saving_path, 'IMU', f'{imu_idx[0]}_{imu_lab[0]}_{seq_len.item()}_imu.npy'), imu_seq[0].numpy())
+    np.save(os.path.join(saving_path, 'Video1', f'{vid1_idx[0]}_{vid1_lab[0]}_{seq_len.item()}_video1.npy'), vid1_seq[0].numpy())
+    np.save(os.path.join(saving_path, 'Video2', f'{vid2_idx[0]}_{vid2_lab[0]}_{seq_len.item()}_video2.npy'), vid2_seq[0].numpy())
+    # print(f'{imu_seq[0].shape=}')
+    # print(f'{vid1_seq[0].shape=}')
+    # print(f'{vid2_seq[0].shape=}')
     
-    # print max and min vid1
-    print(f'{np.max(vid1_seq[0].numpy())=}, {np.min(vid1_seq[0].numpy())=}')
+    # # print max and min vid1
+    # print(f'{np.max(vid1_seq[0].numpy())=}, {np.min(vid1_seq[0].numpy())=}')
 
     # print(f'{imu_seq[0].dtype=}')
     # print(f'{vid1_seq[0].dtype=}')

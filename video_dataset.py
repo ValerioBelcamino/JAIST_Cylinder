@@ -13,7 +13,7 @@ def pad_videos(video, max_length):
         return zeros
 
 class VideoDataset(Dataset):
-    def __init__(self, image_names, labels, lengths, max_length=300, pixel_dim=224):
+    def __init__(self, image_names, labels, lengths, max_length=300, pixel_dim=224, cam_id=1):
         self.image_names = image_names
         # print(f'len(image_names): {len(image_names)}')
         self.labels = labels
@@ -21,6 +21,7 @@ class VideoDataset(Dataset):
         self.lengths = lengths
         self.max_length = max_length
         self.pixel_dim = pixel_dim
+        self.cam_id = cam_id
 
     def __len__(self):
         return len(self.image_names)
@@ -30,7 +31,7 @@ class VideoDataset(Dataset):
         sequence = self.load_sequence(self.image_names[idx])
         
         label = self.labels[idx]
-        sequence = sequence.permute(1,0,2,3)
+        
         # return idx
         return idx, sequence, label
 
@@ -50,15 +51,27 @@ class VideoDataset(Dataset):
         horizontal_flip = np.random.rand() < 0.2
 
         # Apply any necessary transforms (e.g., resize, normalization)
-        transform = transforms.Compose([
-            # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
-            CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=0),
-            transforms.Resize((self.pixel_dim, self.pixel_dim)),
-            transforms.ToTensor(),
-            transforms.Grayscale(num_output_channels=1),    
-            # transforms.Normalize(mean=[0.0738], std=[0.1104]),  
-            # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
-        ])
+
+        if self.cam_id == 1:
+            transform = transforms.Compose([
+                # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
+                CutBlackContour(left_margin=100, right_margin=65, top_margin=20, bottom_margin=0),
+                transforms.Resize((self.pixel_dim, self.pixel_dim)),
+                transforms.ToTensor(),
+                transforms.Grayscale(num_output_channels=1),    
+                # transforms.Normalize(mean=[0.0738], std=[0.1104]),  
+                # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
+            ])
+        elif self.cam_id == 2:
+            transform = transforms.Compose([
+                # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
+                CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=0),
+                transforms.Resize((self.pixel_dim, self.pixel_dim)),
+                transforms.ToTensor(),
+                transforms.Grayscale(num_output_channels=1),    
+                # transforms.Normalize(mean=[0.0738], std=[0.1104]),  
+                # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
+            ])
         
         sequence = [transform(img) for img in sequence]
         # sequence = [transforms.functional.pil_to_tensor(transform(img)) for img in sequence]
@@ -67,7 +80,9 @@ class VideoDataset(Dataset):
         # print(f'{sequence.shape=}')
         sequence = pad_videos(sequence, self.max_length)
         # print(f'{sequence.shape=}')
-        return sequence  # Shape: (C, T, H, W)
+        sequence = sequence.permute(1,0,2,3)
+        # print(f'{sequence.shape=}')
+        return sequence  # Shape: (T, C, H, W)
 
 
 
@@ -95,7 +110,7 @@ class VideoDatasetNPY(Dataset):
 
     def load_sequence(self, action_image_names):
         sequence = np.load(action_image_names)
-
+        # print(f'{sequence.shape=}')
         # Toss a coin to decide whether to flip the video horizontally
         horizontal_flip = np.random.rand() < 0.2
 
@@ -119,10 +134,13 @@ class VideoDatasetNPY(Dataset):
             transform = transforms.Compose([  
                 transforms.Normalize(mean=[0.03728], std=[0.0750]),  
             ])
+            # print(f'{sequence[0].shape=}')
             for i in range(sequence.shape[0]):
                 new_sequence.append(transform(torch.from_numpy(sequence[i])))
-
+            # print(f'{new_sequence[0].shape=}')
         sequence = torch.stack(new_sequence, dim=1)
+        # print(f'{sequence.shape=}')
+        # exit()
         # Print max and min
         # print(f'{sequence.max()}')
         # print(f'{sequence.min()}')

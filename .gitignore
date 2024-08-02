@@ -13,7 +13,10 @@ Dataset
 IMU_results
 video_results
 Synchronized_Dataset
+Synchronized_Dataset_Realtime
 Segmented_Dataset
+Segmented_Dataset_Realtime
+Segmented_Dataset1
 __pycache__
 6people.png
 6people.pt

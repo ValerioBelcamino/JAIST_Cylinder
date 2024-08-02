@@ -25,11 +25,11 @@ import os
 # print(a.shape)
 # General variables
 
-path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset'
+path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset1'
 
 sub_folders = ['Video1', 'Video2', 'IMU']
 
-do_train = False
+do_train = True    
 
 # Seed for reproducibility
 np.random.seed(0)
@@ -46,7 +46,7 @@ intermediate_dim = 64
 # Training and Evaluation
 num_epochs = 200
 learning_rate = 0.0001
-batch_size = 16
+batch_size = 32
 patience = 10
 
 video_augmentation = False
@@ -135,16 +135,17 @@ for trial in sorted(os.listdir(path)):
 
 for vn in video_filenames1:
     vn_base = os.path.basename(vn)
-    video_labels1.append(int(vn_base.split('_')[1]))
-    lengths.append(int(vn_base.split('_')[2]))
+    # print(f'{vn_base=}')
+    video_labels1.append(int(vn_base.split('_')[2]))
+    lengths.append(int(vn_base.split('_')[3]))
 
 for vn in video_filenames2:
     vn_base = os.path.basename(vn)
-    video_labels2.append(int(vn_base.split('_')[1]))
+    video_labels2.append(int(vn_base.split('_')[2]))
 
 for imn in imu_filenames:
     imn_base = os.path.basename(imn)
-    imu_labels.append(int(imn_base.split('_')[1]))
+    imu_labels.append(int(imn_base.split('_')[2]))
 
 # Convert the label list into a tensor
 video_labels1 = torch.tensor(video_labels1)
@@ -396,5 +397,5 @@ sns.heatmap(conf_matrix_ext, annot=True, fmt='.2f', cmap='Blues', xticklabels= a
 plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.title('Confusion Matrix with Precision and Recall')
-plt.savefig(os.path.join('video_imu_results', confusion_matrix_name.split('.')[0] + f'_f1:{f1}.png'))
+plt.savefig(os.path.join('video_imu_results', confusion_matrix_name[:-4] + f'_f1_{f1:.3f}.png'))
 plt.show()

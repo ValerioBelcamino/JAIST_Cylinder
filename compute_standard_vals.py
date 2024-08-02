@@ -7,6 +7,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score
 from video_dataset import VideoDatasetNPY
+from sequence_dataset import SequenceDatasetNPY
 from utils import EarlyStopper, play_video
 import matplotlib.pyplot as plt
 from ViViT.vivit import ViViT
@@ -24,7 +25,7 @@ import os
 
 # General variables
 
-path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset'
+path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset1'
 
 sub_folders = ['Video1', 'Video2']
 
@@ -45,7 +46,7 @@ num_epochs = 200
 learning_rate = 0.001
 batch_size = 16
 
-video_augmentation = True
+video_augmentation = False
 
 pixel_dim = 224
 patch_size = 56
@@ -83,6 +84,7 @@ action_cut_time_dict = {'linger': 5, 'massaging': 2, 'patting': 3,
 
 video_filenames = []
 video_labels = []
+imu_filenames = []
 
 sub_folder = None
 if which_camera == 0:
@@ -96,70 +98,91 @@ trials = os.listdir(path)
 for trial in sorted(trials):
     video_names = sorted([os.path.join(path, trial, sub_folder, f) for f in os.listdir(os.path.join(path, trial, sub_folder))])
     video_filenames.extend(video_names)
+    imu_names = sorted([os.path.join(path, trial, 'IMU', f) for f in os.listdir(os.path.join(path, trial, 'IMU'))])
+    imu_filenames.extend(imu_names)
 
-for vn in video_filenames:
-    vn_base = os.path.basename(vn)
-    video_labels.append(int(vn_base.split('_')[1]))
+lenghts = []
 
-# Convert the label list into a tensor
-video_labels = torch.tensor(video_labels)
+for name in imu_filenames:
+    name = os.path.basename(name)
+    lenghts.append(name.split('_')[3])
 
-# for i in range(10):
-#     print(f'{video_filenames[i]}')
-#     print(f'{video_labels[i]}')
-# print(f'\n{video_filenames[:10]}')
 print(f'{len(video_filenames)}')
-print(f'{len(video_labels)}')
+print(f'{len(imu_filenames)}')
 
 # Check that there are no duplicates
-assert len(video_filenames) == len(set(video_filenames)) == len(video_labels)
+assert len(video_filenames) == len(set(video_filenames)) == len(imu_filenames)
 
 
-# start_time = time.time()
-# for i in range(len(video_filenames)):
-#     np.load(video_filenames[i])
-# print(f'\n{time.time() - start_time}')
+
 
 X_train_names, X_test_names, Y_train_labels, Y_test_labels = train_test_split(
-                                            video_filenames, 
-                                            video_labels,
+                                            video_filenames,
+                                            range(len(video_filenames)), 
                                             test_size=0.3, 
+                                            random_state=0
+                                            )
+
+X_train_imu_names, X_test_imu_names, Y_train_labels, Y_test_labels = train_test_split(
+                                            imu_filenames,
+                                            range(len(video_filenames)), 
+                                            test_size=0.3,
                                             random_state=0
                                             )
 
 print(f'\n{len(X_train_names)=}, {len(X_test_names)=}')
 print(f'{len(Y_train_labels)=}, {len(Y_test_labels)=}\n')
 
-train_dataset = VideoDatasetNPY(X_train_names, Y_train_labels, [], max_length=max_time, pixel_dim=pixel_dim)
-test_dataset = VideoDatasetNPY( X_test_names,  Y_test_labels,  [], max_length=max_time, pixel_dim=pixel_dim)
+train_dataset = VideoDatasetNPY(X_train_names, Y_train_labels, [], max_length=max_time, pixel_dim=pixel_dim, video_augmentation=video_augmentation)
+test_dataset = VideoDatasetNPY( X_test_names,  Y_test_labels,  [], max_length=max_time, pixel_dim=pixel_dim, video_augmentation=video_augmentation)
 print('Datasets Initialized\n')
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 print('Data Loaders Initialized\n')
 
-model = ViViT(pixel_dim, patch_size, len(action_names), 150, in_channels=1).cuda()
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-print('Model Initialized\n')
+train_dataset_imu = SequenceDatasetNPY(X_train_imu_names, Y_train_labels, lenghts, max_len=150)
+train_loader_imu = DataLoader(train_dataset_imu, batch_size=batch_size, shuffle=True)
+print('\n\n\n')
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model.to(device)
-print(f'Model moved to {device}\n')
 
-# Initialize early stopping
-early_stopping = EarlyStopper(patience=10)
+imu_list = []
+count = 0
+if do_train:
+    for epoch in range(1):
+        for imus, _, lenghts in train_loader_imu:
 
-best_model = None
-train_losses = []
 
-print('\n\n\n')
+            print(f'Batch {count} over {len(train_loader)}')
+            count += 1
+            imus = imus.to(device)
+            for i in range(imus.shape[0]):
+                element = imus[i, :int(lenghts[i])]
+                element = element.cpu().numpy()
+                imu_list.append(element)
+            
+print(f'{len(imu_list)}')
+# now let's stack all the elements
+stacked_imus = np.concatenate(imu_list, axis=0)
+print(f'{stacked_imus.shape}')
+
+#let's compute the mean and std for each feature
+mean = np.mean(stacked_imus, axis=0)
+std = np.std(stacked_imus, axis=0)
+print(f'{mean=}, {std=}')
+
+# let's compute max and min for each feature
+max_values = np.max(stacked_imus, axis=0)
+min_values = np.min(stacked_imus, axis=0)
+print(f'Maximum values per feature: {max_values}')
+print(f'Minimum values per feature: {min_values}')
+exit()
 
 video_list = []
 count = 0
 if do_train:
     for epoch in range(1):
-        model.train()
         for videos, labels in train_loader:
             print(f'Batch {count} over {len(train_loader)}')
             count += 1

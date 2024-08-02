@@ -2,6 +2,7 @@ import numpy as np
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset, Sampler
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, accuracy_score
+from torchvision import transforms
 import torch
 import cv2 
 
@@ -249,3 +250,51 @@ def create_confusion_matrix_w_precision_recall(y_true, y_pred, accuracy):
     conf_matrix_ext = np.vstack([conf_matrix_ext, recall_ext])
 
     return conf_matrix_ext
+
+
+
+def load_images_as_video_sequence(image_names, cam_id, pixel_dim):
+    # Load all PNG files in the folder and sort them
+
+    sequence = []
+    for image in image_names:
+        try:
+            sequence.append(Image.open(image))
+        except:
+            print(f'Error opening {image}')
+    # sequence = [Image.open(img) for img in images]
+    
+    # Toss a coin to decide whether to flip the video horizontally
+    horizontal_flip = np.random.rand() < 0.2
+
+    # Apply any necessary transforms (e.g., resize, normalization)
+
+    if cam_id == 1:
+        transform = transforms.Compose([
+            # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
+            CutBlackContour(left_margin=100, right_margin=65, top_margin=20, bottom_margin=0),
+            transforms.Resize((pixel_dim, pixel_dim)),
+            transforms.ToTensor(),
+            transforms.Grayscale(num_output_channels=1),    
+            # transforms.Normalize(mean=[0.0738], std=[0.1104]),  
+            # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
+        ])
+    elif cam_id == 2:
+        transform = transforms.Compose([
+            # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
+            CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=0),
+            transforms.Resize((pixel_dim, pixel_dim)),
+            transforms.ToTensor(),
+            transforms.Grayscale(num_output_channels=1),    
+            # transforms.Normalize(mean=[0.0738], std=[0.1104]),  
+            # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
+        ])
+    
+    sequence = [transform(img) for img in sequence]
+    # sequence = [transforms.functional.pil_to_tensor(transform(img)) for img in sequence]
+    # print(sequence[0].dtype)
+    sequence = torch.stack(sequence, dim=1)
+    sequence = sequence.permute(1,0,2,3)
+    # print(f'{sequence.shape=}')
+    # print(f'{sequence.shape=}')
+    return sequence  # Shape: (C, T, H, W)
