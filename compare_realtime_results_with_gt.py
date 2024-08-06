@@ -3,11 +3,11 @@ import matplotlib.patches as mpatches
 import numpy as np
 import os
 
-base_path = 'z:\\Shared\\JAIST_Cylinder'
 base_path = '/home/s2412003/Shared/JAIST_Cylinder'
+base_path = 'z:\\Shared\\JAIST_Cylinder'
 
 available_models = ['IMU', 'Video', 'both']
-which_model = 'IMU'
+which_model = 'both'
 
 print(f'Using {which_model} model\n\n')
 

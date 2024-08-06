@@ -115,18 +115,21 @@ class VideoDatasetNPY(Dataset):
         # Toss a coin to decide whether to flip the video horizontally
         horizontal_flip = np.random.rand() < 0.2
 
+        random_angle = np.random.uniform(-180, 180)
+
         new_sequence = []
         if self.video_augmentation:
+            # print('Augmenting video...')
             # Apply any necessary transforms (e.g., resize, normalization)
             if self.cam_id == 1:
                 transform = transforms.Compose([
                     transforms.Normalize(mean=[0.2959], std=[0.9831]),  
-                    RotateCircularPortion(center=(112, 112), radius=110, random_angle= np.random.uniform(-180, 180)),
+                    RotateCircularPortion(center=(112, 112), radius=110, random_angle=random_angle),
                 ])
             if self.cam_id == 2:
                 transform = transforms.Compose([
                     transforms.Normalize(mean=[0.3505], std=[1.061]),  
-                    RotateCircularPortion(center=(112, 112), radius=110, random_angle= np.random.uniform(-180, 180)),
+                    RotateCircularPortion(center=(112, 112), radius=110, random_angle=random_angle),
                 ])
 
             for i in range(sequence.shape[0]):
@@ -134,6 +137,8 @@ class VideoDatasetNPY(Dataset):
             # new_sequence = [torch.from_numpy(sequence[i]) for i in range(sequence.shape[0])]
             # sequence = [torch.from_numpy(sequence[i]) for i in range(sequence.shape[0])]
         else:
+            # print('Not augmenting video...')
+
             if self.cam_id == 1:
                 transform = transforms.Compose([  
                     transforms.Normalize(mean=[0.2959], std=[0.9831]),  

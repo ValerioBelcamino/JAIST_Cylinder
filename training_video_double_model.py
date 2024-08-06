@@ -25,11 +25,11 @@ import os
 # print(a.shape)
 # General variables
 
-path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset'
+path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset2'
 
 sub_folders = ['Video1', 'Video2']
 
-do_train = False
+do_train = True
 
 # Seed for reproducibility
 np.random.seed(0)
@@ -38,22 +38,22 @@ np.random.seed(0)
 input_dim = 0
 output_dim = 0
 max_seq_length = 0
-nhead = 8  
+nhead = 16
 num_encoder_layers = 2
-dim_feedforward = 128
+dim_feedforward = 256
 intermediate_dim = 64
 
 # Training and Evaluation
 num_epochs = 200
 learning_rate = 0.0001
 batch_size = 8
-patience = 10
+patience = 20
 
 video_augmentation = False
 
 pixel_dim = 224
 patch_size = 56
-max_time = 150
+max_time = 90
 n_features = 72
 
 checkpoint_model_name = f'checkpoint_model_VideoDoubleModel_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
@@ -159,13 +159,13 @@ print(f'{len(Y_train_labels)=}, {len(Y_test_labels)=}')
 
 
 # Set max time using the dictionary times 30 fps to pad the videos
-max_time = 30*max(action_cut_time_dict.values())
+# max_time = 30*max(action_cut_time_dict.values())
 
 # Create the video datasets
-train_dataset_video1 = VideoDatasetNPY(X_train_video1, Y_train_labels, [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
-train_dataset_video2 = VideoDatasetNPY(X_train_video2, Y_train_labels, [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
-test_dataset_video1 = VideoDatasetNPY( X_test_video1,  Y_test_labels,  [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
-test_dataset_video2 = VideoDatasetNPY( X_test_video2,  Y_test_labels,  [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
+train_dataset_video1 = VideoDatasetNPY(X_train_video1, Y_train_labels, [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=1)
+train_dataset_video2 = VideoDatasetNPY(X_train_video2, Y_train_labels, [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=2)
+test_dataset_video1 = VideoDatasetNPY( X_test_video1,  Y_test_labels,  [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=1)
+test_dataset_video2 = VideoDatasetNPY( X_test_video2,  Y_test_labels,  [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=2)
 print('Datasets Initialized\n')
 
 # Create a sampler with a seed to synchronize the dataset loaders
@@ -188,7 +188,7 @@ model = BicefHARlo(
                       pixel_dim, 
                       patch_size, 
                       len(action_names), 
-                      150, 
+                      90, 
                       intermediate_dim
                       ).cuda()
 
@@ -199,7 +199,7 @@ print(f'Model initialized on {device}\n')
 
 
 # Initialize early stopping
-early_stopping = EarlyStopper(saving_path=os.path.join('video_results', checkpoint_model_name), patience=patience)
+early_stopping = EarlyStopper(saving_path=os.path.join('_new_video_results', checkpoint_model_name), patience=patience)
 
 best_model = None
 train_losses = []
@@ -247,7 +247,7 @@ if do_train:
 
 
 # Load the best model
-model.load_state_dict(torch.load(os.path.join('video_results', checkpoint_model_name)))
+model.load_state_dict(torch.load(os.path.join('_new_video_results', checkpoint_model_name)))
 
 # Evaluation
 model.eval()
@@ -308,8 +308,8 @@ sns.heatmap(conf_matrix_ext, annot=True, fmt='.2f', cmap='Blues', xticklabels= a
 plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.title('Confusion Matrix with Precision and Recall')
-plt.savefig(os.path.join('video_results', confusion_matrix_name))
-print(f'Confusion matrix saved to {os.path.join("video_results", confusion_matrix_name)}')
+plt.savefig(os.path.join('_new_video_results', confusion_matrix_name))
+print(f'Confusion matrix saved to {os.path.join("_new_video_results", confusion_matrix_name)}')
 plt.show()
 exit()
 

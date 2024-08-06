@@ -137,7 +137,6 @@ print(f'Saving model to {checkpoint_model_name}')
 print(f'Saving confusion matrix to {confusion_matrix_name}')
 
 
-
 # _________________________________________________________________________________________________________________________
 # _________________________________________________________________________________________________________________________
 # _________________________________________________________________________________________________________________________
@@ -243,6 +242,7 @@ test_dataset_imu = SequenceDatasetNPY(X_test_imu, Y_test_labels, lengths_test, m
 
 # # Set max time using the dictionary times 30 fps to pad the videos
 # max_time = 30*max(action_cut_time_dict.values())
+
 
 # Create the video datasets
 train_dataset_video1 = VideoDatasetNPY(X_train_video1, Y_train_labels, lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=1)
