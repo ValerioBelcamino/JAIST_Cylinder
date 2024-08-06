@@ -88,7 +88,7 @@ class VideoDataset(Dataset):
 
 
 class VideoDatasetNPY(Dataset):
-    def __init__(self, image_names, labels, lengths, video_augmentation, max_length=300, pixel_dim=224):
+    def __init__(self, image_names, labels, lengths, video_augmentation, max_length=300, pixel_dim=224, cam_id=1):
         self.image_names = image_names
         # print(f'len(image_names): {len(image_names)}')
         self.labels = labels
@@ -97,6 +97,7 @@ class VideoDatasetNPY(Dataset):
         self.max_length = max_length
         self.pixel_dim = pixel_dim
         self.video_augmentation = video_augmentation
+        self.cam_id = cam_id
 
     def __len__(self):
         return len(self.image_names)
@@ -117,23 +118,31 @@ class VideoDatasetNPY(Dataset):
         new_sequence = []
         if self.video_augmentation:
             # Apply any necessary transforms (e.g., resize, normalization)
-            transform = transforms.Compose([
-                transforms.Normalize(mean=[0.03728], std=[0.0750]),  
-                RotateCircularPortion(center=(113, 104), radius=100, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
-                # CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=0),
-                # transforms.Resize((224, 224)),
-                # transforms.ToTensor(),
-                # transforms.Grayscale(num_output_channels=1),    
-                # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
-            ])
+            if self.cam_id == 1:
+                transform = transforms.Compose([
+                    transforms.Normalize(mean=[0.2959], std=[0.9831]),  
+                    RotateCircularPortion(center=(112, 112), radius=110, random_angle= np.random.uniform(-180, 180)),
+                ])
+            if self.cam_id == 2:
+                transform = transforms.Compose([
+                    transforms.Normalize(mean=[0.3505], std=[1.061]),  
+                    RotateCircularPortion(center=(112, 112), radius=110, random_angle= np.random.uniform(-180, 180)),
+                ])
 
-            # new_sequence = [transform(sequence[i]) for i in range(sequence.shape[0])]
-            new_sequence = [torch.from_numpy(sequence[i]) for i in range(sequence.shape[0])]
+            for i in range(sequence.shape[0]):
+                new_sequence.append(transform(torch.from_numpy(sequence[i])))
+            # new_sequence = [torch.from_numpy(sequence[i]) for i in range(sequence.shape[0])]
             # sequence = [torch.from_numpy(sequence[i]) for i in range(sequence.shape[0])]
         else:
-            transform = transforms.Compose([  
-                transforms.Normalize(mean=[0.03728], std=[0.0750]),  
-            ])
+            if self.cam_id == 1:
+                transform = transforms.Compose([  
+                    transforms.Normalize(mean=[0.2959], std=[0.9831]),  
+                ])
+
+            elif self.cam_id == 2:
+                transform = transforms.Compose([  
+                    transforms.Normalize(mean=[0.3505], std=[1.061]),
+                ])
             # print(f'{sequence[0].shape=}')
             for i in range(sequence.shape[0]):
                 new_sequence.append(transform(torch.from_numpy(sequence[i])))

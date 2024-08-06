@@ -29,16 +29,16 @@ action_dict = {action: i for i, action in enumerate(action_names)}
 action_dict_inv = {i: action for i, action in enumerate(action_names)}
 
 # Initialized later
-nhead = 8
+nhead = 16
 num_encoder_layers = 2
-dim_feedforward = 128
+dim_feedforward = 256
 intermediate_dim = 64
 pixel_dim = 224
 patch_size = 56
 max_time = 90
 n_features = 72
 
-which_model = 'imu'
+which_model = 'both'
 
 
 
@@ -83,12 +83,9 @@ if which_model == 'both':
                         dim_feedforward, 
                         intermediate_dim
                         ).to(device)
-    model.load_state_dict(torch.load(f'{base_path}/video_imu_results/checkpoint_model_IMUdoubleVideo_0.0001lr_16bs_224px_56ps_FalseAug.pt'))
+    model.load_state_dict(torch.load(f'{base_path}/_new_video_imu_results/checkpoint_model_IMUdoubleVideo_0.0001lr_16bs_224px_56ps_FalseAug.pt'))
 
 elif which_model == 'imu':
-    nhead = 16
-    dim_feedforward = 256
-
     model = HAR_Transformer(n_features, nhead, num_encoder_layers, dim_feedforward, len(action_names), max_time).to(device)
     model.load_state_dict(torch.load(f'{base_path}/_new_imu_results/checkpoint_model_IMU_all_imus_0.0005lr_32bs_FalseAug.pt'))
 
@@ -113,8 +110,11 @@ print('Model in evaluation mode\n')
 # Create a tensor with the value 150 to provide as batch length to the model
 batch_length = torch.tensor([150]).to(device)
 
-transform = transforms.Compose([  
-                transforms.Normalize(mean=[0.03728], std=[0.0750]),  
+transform1 = transforms.Compose([  
+                transforms.Normalize(mean=[0.2959], std=[0.9831]),  
+            ])
+transform2 = transforms.Compose([  
+                transforms.Normalize(mean=[0.3505], std=[1.061]),  
             ])
 
 for lab in labels_list:
@@ -136,9 +136,9 @@ for lab in labels_list:
     video1_list_temp = []
     video2_list_temp = []
     for i in range(video1_np.shape[0]):
-        video1_list_temp.append(transform(torch.from_numpy(video1_np[i])))
+        video1_list_temp.append(transform1(torch.from_numpy(video1_np[i])))
     for i in range(video2_np.shape[0]):
-        video2_list_temp.append(transform(torch.from_numpy(video2_np[i])))
+        video2_list_temp.append(transform2(torch.from_numpy(video2_np[i])))
 
     video1_tensor = torch.stack(video1_list_temp, dim=1)
     video2_tensor = torch.stack(video2_list_temp, dim=1)
@@ -168,35 +168,35 @@ for lab in labels_list:
     imu_window = imu_window.to(device)
     print('Moved windows to device\n')
 
-    # Put the first elements in the windows
-    video1_window[:, -1, :, :, :] = video1_tensor[0, :, :, :]
-    video2_window[:, -1, :, :, :] = video2_tensor[0, :, :, :]
-    imu_window[:, -1, :] = imu_tensor[0, :]
-    print('First elements in windows\n')
+    # # Put the first elements in the windows
+    # video1_window[:, -1, :, :, :] = video1_tensor[0, :, :, :]
+    # video2_window[:, -1, :, :, :] = video2_tensor[0, :, :, :]
+    # imu_window[:, -1, :] = imu_tensor[0, :]
+    # print('First elements in windows\n')
 
 
-    # window_pad_video = torch.zeros((max_time-lenn, 1, pixel_dim, pixel_dim)).unsqueeze(0).to(device)
-    # window_pad_imu = torch.zeros((max_time-lenn, n_features)).unsqueeze(0).to(device)
+    # # window_pad_video = torch.zeros((max_time-lenn, 1, pixel_dim, pixel_dim)).unsqueeze(0).to(device)
+    # # window_pad_imu = torch.zeros((max_time-lenn, n_features)).unsqueeze(0).to(device)
 
-    # video1_window_new = torch.cat((video1_window, window_pad_video), dim=1)
-    # video2_window_new = torch.cat((video2_window, window_pad_video), dim=1)
-    # imu_window_new = torch.cat((imu_window, window_pad_imu), dim=1)
+    # # video1_window_new = torch.cat((video1_window, window_pad_video), dim=1)
+    # # video2_window_new = torch.cat((video2_window, window_pad_video), dim=1)
+    # # imu_window_new = torch.cat((imu_window, window_pad_imu), dim=1)
 
-    if which_model == 'both':
-        outputs = model(video1_window, video2_window, imu_window, batch_length)
-    elif which_model == 'imu':
-        # print(f'shape: {imu_window_new.shape}')
-        outputs = model(imu_window, batch_length)
-    elif which_model == 'videos':
-        outputs = model(video1_window_new, video2_window_new)
+    # if which_model == 'both':
+    #     outputs = model(video1_window, video2_window, imu_window, batch_length)
+    # elif which_model == 'imu':
+    #     # print(f'shape: {imu_window_new.shape}')
+    #     outputs = model(imu_window, batch_length)
+    # elif which_model == 'videos':
+    #     outputs = model(video1_window_new, video2_window_new)
 
-    _, predicted = torch.max(outputs.data, 1)
-    print(f'\n{action_dict_inv[predicted.item()]}\n')
-    output_labels[0] = predicted
+    # _, predicted = torch.max(outputs.data, 1)
+    # print(f'\n{action_dict_inv[predicted.item()]}\n')
+    # output_labels[0] = predicted
 
 
     # Iterate over the rest of the elements
-    for i in range(1, len(labels_tensor)):
+    for i in range(len(labels_tensor)):
         # Roll the windows
         video1_window = torch.roll(video1_window, shifts=-1, dims=1)
         video2_window = torch.roll(video2_window, shifts=-1, dims=1)
@@ -229,9 +229,9 @@ for lab in labels_list:
 
 
     # Save output_labels to a file
-    if not os.path.exists(os.path.join(base_path, 'realtime_results')):
-        os.makedirs(os.path.join(base_path, 'realtime_results'))
+    if not os.path.exists(os.path.join(base_path, 'realtime_results', f'{which_model}')):
+        os.makedirs(os.path.join(base_path, 'realtime_results', f'{which_model}'))
 
-    with open(os.path.join(base_path, 'realtime_results', f'{length}_predicted_labels.txt'), 'w') as f:
+    with open(os.path.join(base_path, 'realtime_results', f'{which_model}', f'{length}_predicted_labels_{which_model}.txt'), 'w') as f:
         for item in output_labels:
             f.write(f'{item.item()}\n')

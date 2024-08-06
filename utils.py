@@ -285,7 +285,7 @@ def load_images_as_video_sequence(image_names, cam_id, pixel_dim):
     elif cam_id == 2:
         transform = transforms.Compose([
             # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
-            CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=0),
+            CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=40),
             transforms.Resize((pixel_dim, pixel_dim)),
             transforms.ToTensor(),
             transforms.Grayscale(num_output_channels=1),    

@@ -59,8 +59,8 @@ import numpy as np
 # Define the transform pipeline
 transform = transforms.Compose([
     # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
-    CutBlackContour(left_margin=100, right_margin=65, top_margin=20, bottom_margin=0),
-    # CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=40),
+    # CutBlackContour(left_margin=100, right_margin=65, top_margin=20, bottom_margin=0),
+    CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=40),
     transforms.Resize((224, 224)),
     # transforms.ToTensor(),
     # transforms.Grayscale(num_output_channels=1),
@@ -72,7 +72,7 @@ transform = transforms.Compose([
 # Load an image
 image_path = 'C:\\Users\\valer\\OneDrive\\Desktop\\JAIST_Cylinder\\Dataset\\0\\right\\push\\2\\1720407515.895586.jpg'
 image_path2 = 'C:\\Users\\valer\\OneDrive\\Desktop\\JAIST_Cylinder\\Dataset\\0\\right\\push\\1\\1720407515.990453.jpg'
-# image_path = 'C:\\Users\\valer\\OneDrive\\Desktop\\JAIST_Cylinder\\Dataset\\0\\left\\rub\\1\\1720405054.448848.jpg'
+image_path = 'C:\\Users\\valer\\OneDrive\\Desktop\\JAIST_Cylinder\\Dataset\\0\\left\\rub\\1\\1720405054.448848.jpg'
 # image_path2 = 'C:\\Users\\valer\\OneDrive\\Desktop\\JAIST_Cylinder\\Dataset\\0\\right\\push\\1\\1720407515.990453.jpg'
 image = Image.open(image_path)
 image2 = Image.open(image_path)

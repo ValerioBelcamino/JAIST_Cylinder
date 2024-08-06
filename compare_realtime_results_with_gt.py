@@ -3,12 +3,17 @@ import matplotlib.patches as mpatches
 import numpy as np
 import os
 
-base_path = '/home/s2412003/Shared/JAIST_Cylinder'
 base_path = 'z:\\Shared\\JAIST_Cylinder'
+base_path = '/home/s2412003/Shared/JAIST_Cylinder'
+
+available_models = ['IMU', 'Video', 'both']
+which_model = 'IMU'
+
+print(f'Using {which_model} model\n\n')
 
 ground_truth = os.path.join(base_path, 'Segmented_Dataset_Realtime')
 
-path_to_results = os.path.join(base_path, 'realtime_results')
+path_to_results = os.path.join(base_path, 'realtime_results', which_model)
 
 
 
@@ -28,13 +33,29 @@ action_dict = {action: i for i, action in enumerate(action_names)}
 action_dict_inv = {i: action for i, action in enumerate(action_names)}
 
 
+def compute_percentage_overlap(classified_labs, ground_truth_labs, use_none=False):
+    equal_with_nones = 0
+    equal_no_nones = 0
+    nones = 0
+    for cl, gt in zip(classified_labs, ground_truth_labs):
+        if gt == 14:
+            nones += 1
+
+        if cl == gt:
+            equal_with_nones += 1
+            if gt != 14:
+                equal_no_nones += 1
+
+    return (equal_with_nones / len(classified_labs)) * 100, (equal_no_nones / (len(classified_labs) - nones)) * 100
+
+
 # Function to blend color with white to create pastel colors
 def pastel_color(rgba, factor=0.7):
     # Convert RGBA to RGB by ignoring the alpha channel
     rgb = np.array(rgba[:3]) 
     return tuple(rgb * factor + np.array([1, 1, 1]) * (1 - factor))
 
-def plot_action_sequence(actions_start_end_list, length):
+def plot_action_sequence(actions_start_end_list, length, saving_path):
     global action_names, action_names2, action_dict, action_dict_inv
 
     indices_in_seconds = [float(i)/30.0 for i in range(length)]
@@ -74,7 +95,8 @@ def plot_action_sequence(actions_start_end_list, length):
 
     # Display the plot
     plt.tight_layout()
-    plt.show()
+    plt.savefig(saving_path)
+    # plt.show()
 
 def get_action_start_and_end(label_list):
     action_start_end = []
@@ -116,7 +138,7 @@ print(f'\n\n{ground_truth_files}')
 print(f'{len(ground_truth_files)}\n\n')
 
         
-
+classified_labels_list, ground_truth_labels_list = [], []
 for classified_file in os.listdir(path_to_results):
     if classified_file.endswith('.txt'):
         print(f'Processing {classified_file}')
@@ -130,10 +152,10 @@ for classified_file in os.listdir(path_to_results):
 
         # Get the corresponding ground truth
         sequence_len = classified_file.split('_')[0]
-        print(f'{sequence_len}')
-        print(f'{ground_truth_files}')
+        # print(f'{sequence_len}')
+        # print(f'{ground_truth_files}')
         groun_truth_corresponding = [x for x in ground_truth_files if sequence_len in x][0]
-        print(f'{groun_truth_corresponding}\n')
+        # print(f'{groun_truth_corresponding}\n')
 
         with open(groun_truth_corresponding, 'r') as f:
             ground_truth_labels = f.readlines()
@@ -145,11 +167,21 @@ for classified_file in os.listdir(path_to_results):
         # Get action start and end
         classified_start_end = get_action_start_and_end(classified_labels)
         # print(f'{classified_start_end}')
-        print(f'{len(classified_start_end)}')  
+        # print(f'{len(classified_start_end)}')  
 
         ground_truth_start_end = get_action_start_and_end(ground_truth_labels)
         # print(f'{ground_truth_start_end}')
-        print(f'{len(ground_truth_start_end)}')  
+        # print(f'{len(ground_truth_start_end)}')  
 
         # Plot the action sequences
-        plot_action_sequence([classified_start_end, ground_truth_start_end], int(sequence_len))
+        plot_action_sequence([classified_start_end, ground_truth_start_end], int(sequence_len), os.path.join(path_to_results, f'{sequence_len}_comparison.png'))
+
+        classified_labels_list.extend(classified_labels)
+        ground_truth_labels_list.extend(ground_truth_labels)
+
+print(f'Total classified frames: {len(classified_labels_list)} ({len(classified_labels_list)/30} seconds)')
+
+# Compute the percentage overlap
+overlap, overlap_no_none = compute_percentage_overlap(classified_labels_list, ground_truth_labels_list, use_none=True)
+print(f'Overlap with None: {overlap:.2f}')
+print(f'Overlap without None: {overlap_no_none:.2f}\n\n')

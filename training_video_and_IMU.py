@@ -25,7 +25,7 @@ import os
 # print(a.shape)
 # General variables
 
-path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset1'
+path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset2'
 
 sub_folders = ['Video1', 'Video2', 'IMU']
 
@@ -38,22 +38,22 @@ np.random.seed(0)
 input_dim = 0
 output_dim = 0
 max_seq_length = 0
-nhead = 8  
+nhead = 16
 num_encoder_layers = 2
-dim_feedforward = 128
+dim_feedforward = 256
 intermediate_dim = 64
 
 # Training and Evaluation
 num_epochs = 200
 learning_rate = 0.0001
-batch_size = 32
+batch_size = 16
 patience = 10
 
-video_augmentation = False
+video_augmentation = True
 
 pixel_dim = 224
 patch_size = 56
-max_time = 150
+max_time = 90
 
 
 # checkpoit_model_name = os.path.join(path, checkpoint_model_name)
@@ -90,6 +90,40 @@ sensor_conf = all_imus
 sensor_conf_name = 'all_imus'
 n_features = 8 * (len(sensor_conf) + 1)
 print(f'{n_features=}')
+
+
+means = np.array([-6.96805542e+02, -2.25853418e+03, -1.34595679e+03, -1.11699450e+00,
+                    5.86712211e-02, -1.07630253e+00, 3.19620800e+01, 2.18175774e+01,
+                    -3.43563194e+01, -3.16794373e+02, -1.14215515e+02, -1.60282751e+03,
+                    -2.34029472e-01, -5.03993154e-01, -7.03439653e-01, 7.47513914e+00,
+                    2.69293461e+01, -3.57804832e+01, -3.46590729e+02, -1.82277844e+03,
+                    -1.72432056e+03, -1.27731073e+00, -2.57041603e-01, -3.78725111e-01,
+                    9.31902599e+00, 2.67350693e+01, -3.00858269e+01, -2.16260269e+02,
+                    2.93784943e+02, -5.63845581e+02, -2.28240028e-01, -2.25193590e-01,
+                    -6.19725347e-01, 7.64884233e+00, 2.62607403e+01, -3.29219246e+01,
+                    -3.30930664e+02, -1.08913989e+03, -1.42398950e+03, -9.96334553e-01,
+                    -9.73807927e-03, -2.20419630e-01, 2.81873083e+00, 2.35137424e+01,
+                    -3.13092594e+01, 2.39130508e+02, -1.68099585e+03, -2.52542114e+03,
+                    -1.48842512e-02, -1.63395017e-01, -4.47753400e-01, 1.08532734e+01,
+                    2.09372749e+01, -4.61218376e+01, 1.10423950e+03, -1.25824939e+03,
+                    -3.75632471e+03, -1.44030523e+00, 4.82494123e-02, 7.91183561e-02,
+                    5.89785719e+00, 2.82478294e+01, -7.24016800e+01, -9.28175781e+02,
+                    9.93521667e+02, 3.95115112e+03, -3.51719826e-01, -5.98796785e-01,
+                    -2.33891919e-01, 5.38646889e+01, -3.33873701e+00, -2.15550632e+01])
+
+
+stds = np.array([6945.848, 2686.427, 2871.097, 32.93815, 37.17426, 27.305304,
+                    17.970592, 44.100662, 27.643883, 7298.917, 2551.3857, 3329.0312,
+                    51.304676, 49.43646, 31.335526, 16.893368, 47.71109, 32.661713,
+                    6938.176, 2715.3987, 3296.7, 44.91464, 41.5619, 31.240667,
+                    22.5143, 53.592587, 46.943756, 7372.4243, 2737.9797, 3452.1938,
+                    49.012985, 50.870693, 31.164236, 19.169243, 41.900204, 35.39268,
+                    7077.101, 2801.966, 3288.3171, 43.516663, 43.00801, 30.701008,
+                    23.039852, 70.481316, 48.276485, 5794.938, 3421.688, 4203.817,
+                    44.632915, 45.571747, 34.52821, 23.115152, 35.290333, 37.143223,
+                    6662.959, 4907.151, 4953.2593, 33.83719, 76.69994, 47.600132,
+                    38.09727, 62.66252, 63.31026, 6549.3613, 2293.787, 2729.528,
+                    15.296869, 30.679577, 17.03959, 15.159824, 43.69038, 22.054604])
 
 
 
@@ -136,16 +170,16 @@ for trial in sorted(os.listdir(path)):
 for vn in video_filenames1:
     vn_base = os.path.basename(vn)
     # print(f'{vn_base=}')
-    video_labels1.append(int(vn_base.split('_')[2]))
-    lengths.append(int(vn_base.split('_')[3]))
+    video_labels1.append(int(vn_base.split('_')[1]))
+    lengths.append(int(vn_base.split('_')[2]))
 
 for vn in video_filenames2:
     vn_base = os.path.basename(vn)
-    video_labels2.append(int(vn_base.split('_')[2]))
+    video_labels2.append(int(vn_base.split('_')[1]))
 
 for imn in imu_filenames:
     imn_base = os.path.basename(imn)
-    imu_labels.append(int(imn_base.split('_')[2]))
+    imu_labels.append(int(imn_base.split('_')[1]))
 
 # Convert the label list into a tensor
 video_labels1 = torch.tensor(video_labels1)
@@ -204,17 +238,17 @@ print(f'{len(lengths_train)=}, {len(lengths_test)=}\n')
 
 
 # Create the imu datasets
-train_dataset_imu = SequenceDatasetNPY(X_train_imu, Y_train_labels, lengths_train, IMU_conf=sensor_conf)
-test_dataset_imu = SequenceDatasetNPY(X_test_imu, Y_test_labels, lengths_test, IMU_conf=sensor_conf)
+train_dataset_imu = SequenceDatasetNPY(X_train_imu, Y_train_labels, lengths_train, max_len=max_time, IMU_conf=sensor_conf)
+test_dataset_imu = SequenceDatasetNPY(X_test_imu, Y_test_labels, lengths_test, max_len=max_time, IMU_conf=sensor_conf)
 
-# Set max time using the dictionary times 30 fps to pad the videos
-max_time = 30*max(action_cut_time_dict.values())
+# # Set max time using the dictionary times 30 fps to pad the videos
+# max_time = 30*max(action_cut_time_dict.values())
 
 # Create the video datasets
-train_dataset_video1 = VideoDatasetNPY(X_train_video1, Y_train_labels, lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
-train_dataset_video2 = VideoDatasetNPY(X_train_video2, Y_train_labels, lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
-test_dataset_video1 = VideoDatasetNPY( X_test_video1,  Y_test_labels,  lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
-test_dataset_video2 = VideoDatasetNPY( X_test_video2,  Y_test_labels,  lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
+train_dataset_video1 = VideoDatasetNPY(X_train_video1, Y_train_labels, lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=1)
+train_dataset_video2 = VideoDatasetNPY(X_train_video2, Y_train_labels, lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=2)
+test_dataset_video1 = VideoDatasetNPY( X_test_video1,  Y_test_labels,  lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=1)
+test_dataset_video2 = VideoDatasetNPY( X_test_video2,  Y_test_labels,  lengths_train, video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=2)
 print('Datasets Initialized\n')
 
 # Create a sampler with a seed to synchronize the dataset loaders
@@ -239,7 +273,7 @@ model = CHARberoViVit(
                       pixel_dim, 
                       patch_size, 
                       len(action_names), 
-                      150, 
+                      max_time, 
                       n_features, 
                       nhead, 
                       num_encoder_layers, 
@@ -309,7 +343,7 @@ print(f'Model initialized on {device}\n')
 
 
 # Initialize early stopping
-early_stopping = EarlyStopper(saving_path=os.path.join('video_imu_results', checkpoint_model_name), patience=patience)
+early_stopping = EarlyStopper(saving_path=os.path.join('_new_video_imu_results', checkpoint_model_name), patience=patience)
 
 best_model = None
 train_losses = []
@@ -322,9 +356,12 @@ if do_train:
         for (videos1, labels), (videos2, _), (imu_seqs, _, batch_lengths) in zip(train_loader_video1, train_loader_video2, train_loader_imu):
 
             videos1, videos2 = videos1.to(device), videos2.to(device)
+            for i in range(imu_seqs.shape[0]):
+                imu_seqs[i] = (imu_seqs[i] - means) / stds
             imu_seqs = imu_seqs.to(device)
             labels = labels.to(device)
             batch_lengths = batch_lengths.to(device)
+            # print(f'{videos1.shape=}, {videos2.shape=}, {imu_seqs.shape=}, {batch_lengths.shape=}')
 
             outputs = model(videos1, videos2, imu_seqs, batch_lengths)
             loss = criterion(outputs, labels)
@@ -359,7 +396,7 @@ if do_train:
 
 
 # Load the best model
-model.load_state_dict(torch.load(os.path.join('video_imu_results', checkpoint_model_name)))
+model.load_state_dict(torch.load(os.path.join('_new_video_imu_results', checkpoint_model_name)))
 
 # Evaluation
 model.eval()
@@ -370,6 +407,8 @@ with torch.no_grad():
     for (videos1, labels), (videos2, _), (imu_seqs, _, batch_lengths) in zip(test_loader_video1, test_loader_video2, test_loader_imu):
         
         videos1, videos2 = videos1.to(device), videos2.to(device)
+        for i in range(imu_seqs.shape[0]):
+            imu_seqs[i] = (imu_seqs[i] - means) / stds
         imu_seqs = imu_seqs.to(device)
         labels = labels.to(device)
         batch_lengths = batch_lengths.to(device)
@@ -397,5 +436,5 @@ sns.heatmap(conf_matrix_ext, annot=True, fmt='.2f', cmap='Blues', xticklabels= a
 plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.title('Confusion Matrix with Precision and Recall')
-plt.savefig(os.path.join('video_imu_results', confusion_matrix_name[:-4] + f'_f1_{f1:.3f}.png'))
+plt.savefig(os.path.join('_new_video_imu_results', confusion_matrix_name[:-4] + f'_f1_{f1:.3f}.png'))
 plt.show()
