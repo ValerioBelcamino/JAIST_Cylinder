@@ -24,13 +24,13 @@ import os
 
 # General variables
 
-path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset'
+path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset1'
 
 sub_folders = ['Video1', 'Video2']
 
 which_camera = 0
 
-do_train = False
+do_train = True
 
 # Seed for reproducibility
 np.random.seed(0)
@@ -46,11 +46,11 @@ learning_rate = 0.0001
 batch_size = 8
 patience = 40
 
-video_augmentation = False
+video_augmentation = True
 
 pixel_dim = 224
 patch_size = 56
-max_time = 150
+max_time = 90
 
 checkpoint_model_name = f'checkpoint_model_{sub_folders[which_camera]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}aug.pt'
 confusion_matrix_name = f'confusion_matrix_{sub_folders[which_camera]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}aug.png'
@@ -66,7 +66,7 @@ action_names = ['linger', 'massaging', 'patting',
                 'pinching', 'press', 'pull', 
                 'push', 'rub', 'scratching', 
                 'shaking', 'squeeze', 'stroke', 
-                'tapping', 'trembling']
+                'tapping', 'trembling', 'idle']
 
 action_dict = {action: i for i, action in enumerate(action_names)}
 action_dict_inv = {i: action for i, action in enumerate(action_names)}
@@ -131,15 +131,15 @@ X_train_names, X_test_names, Y_train_labels, Y_test_labels = train_test_split(
 print(f'\n{len(X_train_names)=}, {len(X_test_names)=}')
 print(f'{len(Y_train_labels)=}, {len(Y_test_labels)=}\n')
 
-train_dataset = VideoDatasetNPY(X_train_names, Y_train_labels, [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
-test_dataset = VideoDatasetNPY( X_test_names,  Y_test_labels,  [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim)
+train_dataset = VideoDatasetNPY(X_train_names, Y_train_labels, [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=1)
+test_dataset = VideoDatasetNPY( X_test_names,  Y_test_labels,  [], video_augmentation, max_length=max_time, pixel_dim=pixel_dim, cam_id=2)
 print('Datasets Initialized\n')
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 print('Data Loaders Initialized\n')
 
-model = ViViT(pixel_dim, patch_size, len(action_names), 150, in_channels=1).cuda()
+model = ViViT(pixel_dim, patch_size, len(action_names), 90, in_channels=1).cuda()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 print('Model Initialized\n')
@@ -149,7 +149,7 @@ model.to(device)
 print(f'Model moved to {device}\n')
 
 # Initialize early stopping
-early_stopping = EarlyStopper(saving_path=os.path.join('video_results', checkpoint_model_name), patience=patience)
+early_stopping = EarlyStopper(saving_path=os.path.join('_new_video_results', checkpoint_model_name), patience=patience)
 
 best_model = None
 train_losses = []
@@ -195,7 +195,7 @@ if do_train:
 
 
 # Load the best model
-model.load_state_dict(torch.load(os.path.join('video_results', checkpoint_model_name)))
+model.load_state_dict(torch.load(os.path.join('_new_video_results', checkpoint_model_name)))
 
 # Evaluation
 model.eval()
@@ -227,7 +227,7 @@ sns.heatmap(conf_matrix_ext, annot=True, fmt='.2f', cmap='Blues', xticklabels= a
 plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.title('Confusion Matrix with Precision and Recall')
-plt.savefig(os.path.join('video_results', confusion_matrix_name.split('.')[0] + f'_f1_{f1:.4f}.png'))
+plt.savefig(os.path.join('_new_video_results', confusion_matrix_name.split('.')[0] + f'_f1_{f1:.4f}.png'))
 plt.show()
 
 

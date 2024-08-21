@@ -16,9 +16,9 @@ class HAR_Transformer(nn.Module):
         self.input_embedding = nn.Linear(input_dim, dim_feedforward)
         self.position_encoding = nn.Parameter(self.create_position_encoding(max_seq_length, dim_feedforward), requires_grad=False)
         encoder_layers = nn.TransformerEncoderLayer(d_model=dim_feedforward, nhead=nhead, dim_feedforward=dim_feedforward,
-                                                     batch_first=True, dropout=0.2)
+                                                     batch_first=True, dropout=0.3)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layers, num_encoder_layers)
-        self.dp = nn.Dropout(0.2)
+        self.dp = nn.Dropout(0.3)
         self.fc = nn.Linear(dim_feedforward, output_dim)
 
     def create_position_encoding(self, max_seq_length, dim_feedforward):

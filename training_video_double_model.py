@@ -25,7 +25,7 @@ import os
 # print(a.shape)
 # General variables
 
-path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset2'
+path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset1'
 
 sub_folders = ['Video1', 'Video2']
 
@@ -47,17 +47,17 @@ intermediate_dim = 64
 num_epochs = 200
 learning_rate = 0.0001
 batch_size = 8
-patience = 20
+patience = 40
 
-video_augmentation = False
+video_augmentation = True
 
 pixel_dim = 224
 patch_size = 56
 max_time = 90
 n_features = 72
 
-checkpoint_model_name = f'checkpoint_model_VideoDoubleModel_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
-confusion_matrix_name = f'confusion_matrix_VideoDoubleModel_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
+checkpoint_model_name = f'noNorm_checkpoint_model_VideoDoubleModel_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
+confusion_matrix_name = f'noNorm_confusion_matrix_VideoDoubleModel_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
 
 print(f'Saving model to {checkpoint_model_name}')
 print(f'Saving confusion matrix to {confusion_matrix_name}')
@@ -70,7 +70,7 @@ action_names = ['linger', 'massaging', 'patting',
                 'pinching', 'press', 'pull', 
                 'push', 'rub', 'scratching', 
                 'shaking', 'squeeze', 'stroke', 
-                'tapping', 'trembling']
+                'tapping', 'trembling', 'idle']
 
 action_dict = {action: i for i, action in enumerate(action_names)}
 action_dict_inv = {i: action for i, action in enumerate(action_names)}
@@ -209,33 +209,34 @@ print('\n\n\n')
 if do_train:
     for epoch in range(num_epochs):
         model.train()
-        for (videos1, labels), (videos2, _) in zip(train_loader_video1, train_loader_video2):
+        for i in range(1):
+            for (videos1, labels), (videos2, _) in zip(train_loader_video1, train_loader_video2):
 
-            videos1, videos2 = videos1.to(device), videos2.to(device)
-            labels = labels.to(device)
+                videos1, videos2 = videos1.to(device), videos2.to(device)
+                labels = labels.to(device)
 
-            outputs = model(videos1, videos2)
-            loss = criterion(outputs, labels)
-            
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+                outputs = model(videos1, videos2)
+                loss = criterion(outputs, labels)
+                
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}, Best Loss: {early_stopping.min_validation_loss:.4f}, Counter: {early_stopping.counter}')
+            print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}, Best Loss: {early_stopping.min_validation_loss:.4f}, Counter: {early_stopping.counter}')
 
-        train_losses.append(loss.item())
+            train_losses.append(loss.item())
 
-        if early_stopping.early_stop(loss.item(), model.state_dict()):
-            print("Early stopping")
+            if early_stopping.early_stop(loss.item(), model.state_dict()):
+                print("Early stopping")
 
-            # Save the best model
-            # torch.save(early_stopping.best_model_state_dict, os.path.join('video_results', checkpoint_model_name))
-            # print(f'Model saved to {checkpoint_model_name}')
+                # Save the best model
+                # torch.save(early_stopping.best_model_state_dict, os.path.join('video_results', checkpoint_model_name))
+                # print(f'Model saved to {checkpoint_model_name}')
 
-            break   
-        else:
-            best_model = model.state_dict()
-            # torch.save(model.state_dict(), os.path.join('video_results', checkpoint_model_name))
+                break   
+            else:
+                best_model = model.state_dict()
+                # torch.save(model.state_dict(), os.path.join('video_results', checkpoint_model_name))
 
     # Plot train losses
     plt.figure()

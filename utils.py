@@ -106,17 +106,21 @@ def do_pad_stranded_sequencies(stranded_seqs):
 
 
 class RotateCircularPortion:
-    def __init__(self, center, radius, random_angle=0):
+    def __init__(self, center, radius, random_angle=0, channel_first=False):
         self.center = center
         self.radius = radius
         self.random_angle = random_angle
+        self.channel_first = channel_first
     
     def __call__(self, img):
         # Convert PIL image to NumPy array
-        img = np.array(img)
+        # print(f'img shape: {img.shape}')
+        if self.channel_first:
+            img = img.permute(1, 2, 0)
+        img = img.numpy()
         # print(f'img max: {img.max()}')
         # Get the circular portion
-        circular_portion, mask = self.get_circular_portion(img[0])
+        circular_portion, mask = self.get_circular_portion(img)
         # Generate a random angle for rotation
         
         # print(f'random_angle: {self.random_angle}')
@@ -127,17 +131,18 @@ class RotateCircularPortion:
         # Overlay the rotated circular portion back onto the original image
         img[:, :, :] = 0
         # print(f'img max: {img.max()}')
-        # print(f'img shape: {img.shape}')
-        # print(f'img shape: {rotated_circular_portion.shape}')
         # print(f'img shape: {mask.shape}')
-        img[0][mask == 255] = rotated_circular_portion[mask == 255]
+        img[:,:,0][mask == 255] = rotated_circular_portion[mask == 255]
         
         # Convert NumPy array back to PIL image
         # img = Image.fromarray(img)
 
         # print(f'img shape: {img.shape}')
         # print(f'img max: {img.max()}')
-        return torch.from_numpy(img)
+        returned_img = torch.from_numpy(img)
+        if self.channel_first:
+            returned_img = returned_img.permute(2, 0, 1)
+        return returned_img
 
     def get_circular_portion(self, image):
         # Create a mask with a filled circle
@@ -146,7 +151,6 @@ class RotateCircularPortion:
         
         # Extract the circular portion
         circular_portion = cv2.bitwise_and(image, image, mask=mask)
-        
         return circular_portion, mask
 
     def rotate_image(self, image, angle):
@@ -186,17 +190,18 @@ def tensor_to_pil(tensor):
 
 
 def play_video(video_np, fps=30):
+    # print(f'{video_np.shape=}')
     # Convert the tensor to a NumPy array and remove the batch dimension
-    video_array = video_np.permute(0, 2, 3, 1).numpy()  # Shape: [60, 224, 224, 3]
+    # video_array = video_np.permute(0, 2, 3, 1).numpy()  # Shape: [60, 224, 224, 3]
 
     # Normalize the array to [0, 255] and convert to uint8
-    video_array = (video_array - video_array.min()) / (video_array.max() - video_array.min()) * 255
-    video_array = video_array.astype(np.uint8)
+    # video_array = (video_array - video_array.min()) / (video_array.max() - video_array.min()) * 255
+    # video_array = video_array.astype(np.uint8)
 
     # Display the video at X fps
     delay = int(1000 / fps)  # Delay between frames in milliseconds
 
-    for frame in video_array:
+    for frame in video_np:
         cv2.imshow('Video', frame)
         if cv2.waitKey(delay) & 0xFF == ord('q'):
             break
@@ -277,8 +282,8 @@ def load_images_as_video_sequence(image_names, cam_id, pixel_dim):
             # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
             CutBlackContour(left_margin=100, right_margin=65, top_margin=20, bottom_margin=0),
             transforms.Resize((pixel_dim, pixel_dim)),
-            transforms.ToTensor(),
             transforms.Grayscale(num_output_channels=1),    
+            transforms.ToTensor(),
             # transforms.Normalize(mean=[0.0738], std=[0.1104]),  
             # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
         ])
@@ -287,8 +292,8 @@ def load_images_as_video_sequence(image_names, cam_id, pixel_dim):
             # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
             CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=40),
             transforms.Resize((pixel_dim, pixel_dim)),
-            transforms.ToTensor(),
             transforms.Grayscale(num_output_channels=1),    
+            transforms.ToTensor(),
             # transforms.Normalize(mean=[0.0738], std=[0.1104]),  
             # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
         ])

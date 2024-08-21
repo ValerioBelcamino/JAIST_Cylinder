@@ -24,7 +24,7 @@ import os
 
 # General variables
 
-path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset'
+path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset1'
 
 sub_folders = ['Video1', 'Video2', 'Both']
 
@@ -42,18 +42,18 @@ max_seq_length = 0
 
 # Training and Evaluation
 num_epochs = 200
-learning_rate = 0.00001
-batch_size = 32
-patience = 20
+learning_rate = 0.0001
+batch_size = 8
+patience = 30
 
 video_augmentation = True
 
 pixel_dim = 224
 patch_size = 56
-max_time = 150
+max_time = 90
 
-checkpoint_model_name = f'checkpoint_model_doubleTestOn{sub_folders[which_test_set]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
-confusion_matrix_name = f'confusion_matrix_doubleTestOn{sub_folders[which_test_set]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
+checkpoint_model_name = f'idle_checkpoint_model_doubleTestOn{sub_folders[which_test_set]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
+confusion_matrix_name = f'idle_confusion_matrix_doubleTestOn{sub_folders[which_test_set]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
 
 print(f'Saving model to {checkpoint_model_name}')
 print(f'Saving confusion matrix to {confusion_matrix_name}')
@@ -66,7 +66,7 @@ action_names = ['linger', 'massaging', 'patting',
                 'pinching', 'press', 'pull', 
                 'push', 'rub', 'scratching', 
                 'shaking', 'squeeze', 'stroke', 
-                'tapping', 'trembling']
+                'tapping', 'trembling', 'idle']
 
 action_dict = {action: i for i, action in enumerate(action_names)}
 action_dict_inv = {i: action for i, action in enumerate(action_names)}
@@ -182,7 +182,7 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 print('Data Loaders Initialized\n')
 
-model = ViViT(pixel_dim, patch_size, len(action_names), 150, in_channels=1).cuda()
+model = ViViT(pixel_dim, patch_size, len(action_names), 90, in_channels=1).cuda()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 print('Model Initialized\n')
@@ -192,7 +192,7 @@ model.to(device)
 print(f'Model moved to {device}\n')
 
 # Initialize early stopping
-early_stopping = EarlyStopper(saving_path=os.path.join('video_results', checkpoint_model_name), patience=patience)
+early_stopping = EarlyStopper(saving_path=os.path.join('_new_video_results', checkpoint_model_name), patience=patience)
 
 best_model = None
 train_losses = []
@@ -238,7 +238,7 @@ if do_train:
 
 
 # Load the best model
-model.load_state_dict(torch.load(os.path.join('video_results', checkpoint_model_name)))
+model.load_state_dict(torch.load(os.path.join('_new_video_results', checkpoint_model_name)))
 
 # Evaluation
 model.eval()
@@ -295,8 +295,8 @@ sns.heatmap(conf_matrix_ext, annot=True, fmt='.2f', cmap='Blues', xticklabels= a
 plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.title('Confusion Matrix with Precision and Recall')
-plt.savefig(os.path.join('video_results', confusion_matrix_name))
-print(f'Confusion matrix saved to {os.path.join("video_results", confusion_matrix_name)}')
+plt.savefig(os.path.join('_new_video_results', confusion_matrix_name))
+print(f'Confusion matrix saved to {os.path.join("_new_video_results", confusion_matrix_name)}')
 plt.show()
 exit()
 

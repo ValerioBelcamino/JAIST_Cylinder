@@ -10,10 +10,13 @@ Dataset
 # Results
 IMU_results
 video_results
+video_imu_results
 realtime_results
 _new_imu_results
 _new_video_imu_results
 _new_video_results
+similarity 
+ViViT
 
 # Other
 __pycache__

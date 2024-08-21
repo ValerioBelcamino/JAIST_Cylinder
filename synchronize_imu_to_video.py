@@ -62,7 +62,7 @@ action_names = ['linger', 'massaging', 'patting',
                 'pinching', 'press', 'pull', 
                 'push', 'rub', 'scratching', 
                 'shaking', 'squeeze', 'stroke', 
-                'tapping', 'trembling']
+                'tapping', 'trembling', 'idle']
 
 sensor_names = ['1', '2', 'imu_data']
 
@@ -72,7 +72,7 @@ dir_content = os.listdir(dataset_path)
 
 for i in tqdm(range(len(dir_content))):
     dir = dir_content[i]
-    if int(dir) != specific_trial:
+    if int(dir) == specific_trial:
         print(f'Skipping trial {dir}...')
         print(specific_trial)
         continue
@@ -81,9 +81,11 @@ for i in tqdm(range(len(dir_content))):
         trial_content = os.listdir(os.path.join(dataset_path, dir, hand_name))
         print(trial_content)
 
-        # assert set(trial_content) == set(action_names)
+        assert len(trial_content) == len(action_names)
 
         for action_name in action_names:
+            if action_name != 'idle':
+                continue
             print(f'{dir} --> {hand_name} --> {action_name}')
             sensor_dirs = os.listdir(os.path.join(dataset_path, dir, hand_name, action_name))
 

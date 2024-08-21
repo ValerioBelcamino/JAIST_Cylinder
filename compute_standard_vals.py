@@ -29,7 +29,7 @@ path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset2'
 
 sub_folders = ['Video1', 'Video2']
 
-which_camera = 0
+which_camera = 1
 
 do_train = True
 
@@ -50,7 +50,7 @@ video_augmentation = False
 
 pixel_dim = 224
 patch_size = 56
-max_time = 150
+max_time = 90
 
 checkpoint_model_name = f'checkpoint_model_{sub_folders[which_camera]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps.pt'
 confusion_matrix_name = f'confusion_matrix_{sub_folders[which_camera]}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps.png'
@@ -141,7 +141,7 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 print('Data Loaders Initialized\n')
 
-train_dataset_imu = SequenceDatasetNPY(X_train_imu_names, Y_train_labels, lenghts, max_len=150)
+train_dataset_imu = SequenceDatasetNPY(X_train_imu_names, Y_train_labels, lenghts, max_len=90)
 train_loader_imu = DataLoader(train_dataset_imu, batch_size=batch_size, shuffle=True)
 print('\n\n\n')
 
@@ -180,18 +180,23 @@ print(f'Minimum values per feature: {min_values}')
 
 # print to file these values
 
-with open(f'{os.path.basename(path)}.txt', 'w') as f:
-    f.write('\nMean\n')
-    f.write(f'{mean}')
-    f.write('\nStd\n')
-    f.write(f'{std}')
-    f.write('\nMax\n')
-    f.write(f'{max_values}')
-    f.write('\nMin\n')
-    f.write(f'{min_values}')
+# with open(f'{os.path.basename(path)}.txt', 'w') as f:
+#     f.write('\nMean\n')
+#     f.write(f'{mean}')
+#     f.write('\nStd\n')
+#     f.write(f'{std}')
+#     f.write('\nMax\n')
+#     f.write(f'{max_values}')
+#     f.write('\nMin\n')
+#     f.write(f'{min_values}')
 
 video_list = []
 count = 0
+
+summ = 0
+summ_squared = 0
+total_pixels = 0
+
 if do_train:
     for epoch in range(1):
         for videos, labels in train_loader:
@@ -199,14 +204,45 @@ if do_train:
             count += 1
             videos, labels = videos.to(device), labels.to(device)
 
+            # print(videos.shape)
             for i in range(videos.shape[0]):
-                video_list.append(videos[i].cpu().numpy())
+                for j in range(videos.shape[1]):
+
+                    total_pixels += videos[i, j, 0, :, :].cpu().numpy().size
+                    summ += np.sum(videos[i, j, 0, :, :].cpu().numpy())
 
 
-# Compute the mean and std of the videos
-video_list = np.array(video_list)
-mean = np.mean(video_list)
-std = np.std(video_list)
+        # Calculate mean
+        mean = summ / total_pixels
+
+        for videos, labels in train_loader:
+            print(f'Batch {count} over {len(train_loader)}')
+            count += 1
+            videos, labels = videos.to(device), labels.to(device)
+
+            # print(videos.shape)
+            for i in range(videos.shape[0]):
+                for j in range(videos.shape[1]):
+                    summ_squared += np.sum((videos[i, j, 0, :, :].cpu().numpy() - mean) ** 2)
+
+        std = np.sqrt(summ_squared / total_pixels)
+
+
+            # for i in range(videos.shape[0]):
+            #     video_list.append(videos[i].cpu().numpy())
+
+
+# # Compute the mean and std of the videos
+# video_list = np.array(video_list)
+# mean = np.mean(video_list)
+# std = np.std(video_list)
+
+
+# Calculate variance
+# variance = (summ_squared / total_pixels) - (mean ** 2)
+
+# # Calculate standard deviation
+# std = np.sqrt(variance)
 
 print(f'{mean=}, {std=}')
 exit()

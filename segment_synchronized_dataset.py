@@ -29,7 +29,7 @@ from PIL import Image
 # General variables
 
 path = '/home/s2412003/Shared/JAIST_Cylinder/Synchronized_Dataset'
-saving_path_pre = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset2'
+saving_path_pre = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset1'
 
 sub_folders = ['IMU', 'Video1', 'Video2']
 
@@ -67,7 +67,7 @@ action_names = ['linger', 'massaging', 'patting',
                 'pinching', 'press', 'pull', 
                 'push', 'rub', 'scratching', 
                 'shaking', 'squeeze', 'stroke', 
-                'tapping', 'trembling']
+                'tapping', 'trembling', 'idle']
 
 action_dict = {action: i for i, action in enumerate(action_names)}
 action_dict_inv = {i: action for i, action in enumerate(action_names)}
@@ -76,7 +76,7 @@ action_cut_time_dict = {'linger': 3, 'massaging': 3, 'patting': 3,
                         'pinching': 3, 'press': 3, 'pull': 3,
                         'push': 3, 'rub': 3, 'scratching': 3,
                         'shaking': 3, 'squeeze': 3, 'stroke': 3,
-                        'tapping': 3, 'trembling': 3}
+                        'tapping': 3, 'trembling': 3, 'idle': 3}
 
 # action_cut_time_dict = {'linger': 5, 'massaging': 2, 'patting': 3,
 #                         'pinching': 3, 'press': 2, 'pull': 4,

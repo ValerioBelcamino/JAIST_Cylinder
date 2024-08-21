@@ -25,11 +25,11 @@ import os
 # print(a.shape)
 # General variables
 
-path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset2'
+path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset1'
 
 sub_folders = ['Video1', 'Video2', 'IMU']
 
-do_train = True    
+do_train = False
 
 # Seed for reproducibility
 np.random.seed(0)
@@ -49,7 +49,7 @@ learning_rate = 0.0001
 batch_size = 16
 patience = 10
 
-video_augmentation = True
+video_augmentation = False
 
 pixel_dim = 224
 patch_size = 56
@@ -64,7 +64,7 @@ action_names = ['linger', 'massaging', 'patting',
                 'pinching', 'press', 'pull', 
                 'push', 'rub', 'scratching', 
                 'shaking', 'squeeze', 'stroke', 
-                'tapping', 'trembling']
+                'tapping', 'trembling', 'idle']
 
 action_dict = {action: i for i, action in enumerate(action_names)}
 action_dict_inv = {i: action for i, action in enumerate(action_names)}
@@ -130,12 +130,13 @@ stds = np.array([6945.848, 2686.427, 2871.097, 32.93815, 37.17426, 27.305304,
 # checkpoint_model_name = f'checkpoint_model_IMUdoubleVideo_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
 # confusion_matrix_name = f'confusion_matrix_IMUdoubleVideo_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
 
-checkpoint_model_name = f'checkpoint_model_IMUdoubleVideo_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
-confusion_matrix_name = f'confusion_matrix_IMUdoubleVideo_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
+checkpoint_model_name = f'noNorm_idle_checkpoint_model_IMUdoubleVideo_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
+confusion_matrix_name = f'noNorm_idle_confusion_matrix_IMUdoubleVideo_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
 
 print(f'Saving model to {checkpoint_model_name}')
 print(f'Saving confusion matrix to {confusion_matrix_name}')
 
+# video_augmentation = False
 
 # _________________________________________________________________________________________________________________________
 # _________________________________________________________________________________________________________________________
@@ -353,6 +354,7 @@ print('\n\n\n')
 if do_train:
     for epoch in range(num_epochs):
         model.train()
+        # for i in range(4):
         for (videos1, labels), (videos2, _), (imu_seqs, _, batch_lengths) in zip(train_loader_video1, train_loader_video2, train_loader_imu):
 
             videos1, videos2 = videos1.to(device), videos2.to(device)

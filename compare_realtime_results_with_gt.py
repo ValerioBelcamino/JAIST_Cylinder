@@ -6,8 +6,8 @@ import os
 base_path = '/home/s2412003/Shared/JAIST_Cylinder'
 base_path = 'z:\\Shared\\JAIST_Cylinder'
 
-available_models = ['IMU', 'Video', 'both']
-which_model = 'both'
+available_models = ['IMU', 'videos', 'both']
+which_model = 'both1'
 
 print(f'Using {which_model} model\n\n')
 
@@ -76,7 +76,7 @@ def plot_action_sequence(actions_start_end_list, length, saving_path):
     # Plot each action as a box on the same line
     for i, action_start_end in enumerate(actions_start_end_list):
         for action, start, end in action_start_end:
-            ax.barh(i, (end - start)/30.0, left=start/30.0, height=0.4, color=action_colors[action_names[action]], edgecolor='black', label=action_dict_inv[action])
+            ax.barh(i, (end - start)/30.0, left=start/30.0, height=0.5, color=action_colors[action_names[action]], edgecolor='black', label=action_dict_inv[action])
 
     # Add labels and title
     ax.set_xlabel('Time')
@@ -87,9 +87,11 @@ def plot_action_sequence(actions_start_end_list, length, saving_path):
     # Remove duplicate labels in the legend
     handles, labels = ax.get_legend_handles_labels()
     unique_labels = {label: handle for label, handle in zip(labels, handles)}
+    unique_labels = {i: unique_labels[i] for i in action_names2}
+
     ax.legend(unique_labels.values(), unique_labels.keys(), title='Actions', bbox_to_anchor=(1.05, 1), loc='upper left')
 
-    ax.set_ylim(-0.5, 2.5)
+    ax.set_ylim(-0.5, 1.5)
     ax.set_xlim(-10, max(indices_in_seconds)+10)
 
 
@@ -139,7 +141,9 @@ print(f'{len(ground_truth_files)}\n\n')
 
         
 classified_labels_list, ground_truth_labels_list = [], []
-for classified_file in os.listdir(path_to_results):
+for i, classified_file in enumerate(os.listdir(path_to_results)):
+    # if i <= 3:
+    #     continue
     if classified_file.endswith('.txt'):
         print(f'Processing {classified_file}')
         result_path = os.path.join(path_to_results, classified_file)
@@ -151,11 +155,12 @@ for classified_file in os.listdir(path_to_results):
             # print('\n')
 
         # Get the corresponding ground truth
-        sequence_len = classified_file.split('_')[0]
+        trial = classified_file.split('_')[0]
+        sequence_len = classified_file.split('_')[1]
         # print(f'{sequence_len}')
         # print(f'{ground_truth_files}')
-        groun_truth_corresponding = [x for x in ground_truth_files if sequence_len in x][0]
-        # print(f'{groun_truth_corresponding}\n')
+        groun_truth_corresponding = [x for x in ground_truth_files if '_'.join([trial, sequence_len]) in x][0]
+        print(f'{groun_truth_corresponding}\n')
 
         with open(groun_truth_corresponding, 'r') as f:
             ground_truth_labels = f.readlines()
@@ -174,7 +179,7 @@ for classified_file in os.listdir(path_to_results):
         # print(f'{len(ground_truth_start_end)}')  
 
         # Plot the action sequences
-        plot_action_sequence([classified_start_end, ground_truth_start_end], int(sequence_len), os.path.join(path_to_results, f'{sequence_len}_comparison.png'))
+        plot_action_sequence([classified_start_end, ground_truth_start_end], int(sequence_len), os.path.join(path_to_results, f'{trial}_{sequence_len}_comparison.png'))
 
         classified_labels_list.extend(classified_labels)
         ground_truth_labels_list.extend(ground_truth_labels)

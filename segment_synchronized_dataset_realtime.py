@@ -137,12 +137,20 @@ imu_files = []
 cam1_files = []
 cam2_files = []
 
+current_trial = '3'
+current_hand = 'left'
 
 
 for trial_dir in os.listdir(path):
     print(trial_dir)
+    if trial_dir != current_trial:
+        print(f'\tSkipping trial {trial_dir}')
+        continue
 
     for hand_dir in os.listdir(os.path.join(path, trial_dir)):
+        if hand_dir != current_hand:
+            print(f'\tSkipping hand {hand_dir}')
+            continue
         print(f'\n')
         # print(f'\tTrial: {trial_dir}, Hand: {hand_dir}, Action: {action_dir}')
         temp_path = os.path.join(path, trial_dir, hand_dir)
@@ -221,7 +229,7 @@ for i in range(len(cam1_files)):
     print(f'Loaded video1: {loaded_video1.shape}')
     # video1s.append(loaded_video1)
 
-    loaded_video2 = load_images_as_video_sequence(cam2_files[i], cam_id=1, pixel_dim=224)
+    loaded_video2 = load_images_as_video_sequence(cam2_files[i], cam_id=2, pixel_dim=224)
     print(f'Loaded video2: {loaded_video2.shape}')
     # video2s.append(loaded_video2)
 
@@ -233,9 +241,9 @@ for i in range(len(cam1_files)):
     if not os.path.exists(os.path.join(saving_path, 'Video2')):
         os.makedirs(os.path.join(saving_path, 'Video2'))
 
-    np.save(os.path.join(saving_path, 'IMU', f'{i}_{imu_files[i].shape[0]}_imu.npy'), imu_files[i])
-    np.save(os.path.join(saving_path, 'Video1', f'{i}_{loaded_video2.shape[0]}_video1.npy'), loaded_video1.numpy())
-    np.save(os.path.join(saving_path, 'Video2', f'{i}_{loaded_video2.shape[0]}_video2.npy'), loaded_video2.numpy())
+    np.save(os.path.join(saving_path, 'IMU', f'{6}_{imu_files[i].shape[0]}_imu.npy'), imu_files[i])
+    np.save(os.path.join(saving_path, 'Video1', f'{6}_{loaded_video1.shape[0]}_video1.npy'), loaded_video1.numpy())
+    np.save(os.path.join(saving_path, 'Video2', f'{6}_{loaded_video2.shape[0]}_video2.npy'), loaded_video2.numpy())
 
 
 print('Finished saving the files.')

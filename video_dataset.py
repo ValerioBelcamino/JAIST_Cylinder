@@ -57,8 +57,8 @@ class VideoDataset(Dataset):
                 # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
                 CutBlackContour(left_margin=100, right_margin=65, top_margin=20, bottom_margin=0),
                 transforms.Resize((self.pixel_dim, self.pixel_dim)),
-                transforms.ToTensor(),
                 transforms.Grayscale(num_output_channels=1),    
+                transforms.ToTensor(),
                 # transforms.Normalize(mean=[0.0738], std=[0.1104]),  
                 # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
             ])
@@ -67,8 +67,8 @@ class VideoDataset(Dataset):
                 # RotateCircularPortion(center=(323, 226), radius=210, random_angle= np.random.uniform(-180, 180)),  # Example center and radius
                 CutBlackContour(left_margin=80, right_margin=80, top_margin=0, bottom_margin=40),
                 transforms.Resize((self.pixel_dim, self.pixel_dim)),
-                transforms.ToTensor(),
                 transforms.Grayscale(num_output_channels=1),    
+                transforms.ToTensor(),
                 # transforms.Normalize(mean=[0.0738], std=[0.1104]),  
                 # transforms.Lambda(lambda img: transforms.functional.hflip(img) if horizontal_flip else img),
             ])
@@ -123,13 +123,17 @@ class VideoDatasetNPY(Dataset):
             # Apply any necessary transforms (e.g., resize, normalization)
             if self.cam_id == 1:
                 transform = transforms.Compose([
-                    transforms.Normalize(mean=[0.2959], std=[0.9831]),  
-                    RotateCircularPortion(center=(112, 112), radius=110, random_angle=random_angle),
+                    # transforms.Normalize(mean=[0.07427], std=[0.09232]),  
+                    # transforms.Normalize(mean=[-0.2251], std=[0.0939]),  
+                    # transforms.Normalize(mean=[0.2959], std=[0.9831]),  
+                    RotateCircularPortion(center=(112, 112), radius=110, random_angle=random_angle, channel_first=True),
                 ])
             if self.cam_id == 2:
                 transform = transforms.Compose([
-                    transforms.Normalize(mean=[0.3505], std=[1.061]),  
-                    RotateCircularPortion(center=(112, 112), radius=110, random_angle=random_angle),
+                    # transforms.Normalize(mean=[0.081102], std=[0.09952]),
+                    # transforms.Normalize(mean=[-0.218], std=[0.1012]),  
+                    # transforms.Normalize(mean=[0.3505], std=[1.061]),  
+                    RotateCircularPortion(center=(112, 112), radius=110, random_angle=-random_angle, channel_first=True),
                 ])
 
             for i in range(sequence.shape[0]):
@@ -139,18 +143,25 @@ class VideoDatasetNPY(Dataset):
         else:
             # print('Not augmenting video...')
 
+            # cam_id == 2        
+            # 
             if self.cam_id == 1:
                 transform = transforms.Compose([  
-                    transforms.Normalize(mean=[0.2959], std=[0.9831]),  
+                    transforms.Normalize(mean=[0.07427], std=[0.09232]),  
+                    # transforms.Normalize(mean=[-0.2251], std=[0.0939]),  
+                    # transforms.Normalize(mean=[0.2959], std=[0.9831]),  
                 ])
 
             elif self.cam_id == 2:
                 transform = transforms.Compose([  
-                    transforms.Normalize(mean=[0.3505], std=[1.061]),
+                    transforms.Normalize(mean=[0.081102], std=[0.09952]),
+                    # transforms.Normalize(mean=[-0.218], std=[0.1012]),
+                    # transforms.Normalize(mean=[0.3505], std=[1.061]),
                 ])
             # print(f'{sequence[0].shape=}')
             for i in range(sequence.shape[0]):
-                new_sequence.append(transform(torch.from_numpy(sequence[i])))
+                # new_sequence.append(transform(torch.from_numpy(sequence[i])))
+                new_sequence.append(torch.from_numpy(sequence[i]))
             # print(f'{new_sequence[0].shape=}')
         sequence = torch.stack(new_sequence, dim=1)
         # print(f'{sequence.shape=}')

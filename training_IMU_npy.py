@@ -25,7 +25,7 @@ import os
 # print(a.shape)
 # General variables
 
-path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset2'
+path = '/home/s2412003/Shared/JAIST_Cylinder/Segmented_Dataset1'
 
 sub_folders = ['IMU']
 
@@ -122,7 +122,7 @@ action_names = ['linger', 'massaging', 'patting',
                 'pinching', 'press', 'pull', 
                 'push', 'rub', 'scratching', 
                 'shaking', 'squeeze', 'stroke', 
-                'tapping', 'trembling']
+                'tapping', 'trembling', 'idle']
 
 action_dict = {action: i for i, action in enumerate(action_names)}
 action_dict_inv = {i: action for i, action in enumerate(action_names)}
@@ -154,8 +154,8 @@ print(f'{n_features=}')
 # checkpoint_model_name = f'checkpoint_model_IMUdoubleVideo_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.pt'
 # confusion_matrix_name = f'confusion_matrix_IMUdoubleVideo_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{pixel_dim}px_{patch_size}ps_{video_augmentation}Aug.png'
 
-checkpoint_model_name = f'checkpoint_model_IMU_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{video_augmentation}Aug.pt'
-confusion_matrix_name = f'confusion_matrix_IMU_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{video_augmentation}Aug.png'
+checkpoint_model_name = f'idle_checkpoint_model_IMU_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{video_augmentation}Aug.pt'
+confusion_matrix_name = f'idle_confusion_matrix_IMU_{sensor_conf_name}_{learning_rate}lr_{batch_size}bs_{video_augmentation}Aug.png'
 
 print(f'Saving model to {checkpoint_model_name}')
 print(f'Saving confusion matrix to {confusion_matrix_name}')
