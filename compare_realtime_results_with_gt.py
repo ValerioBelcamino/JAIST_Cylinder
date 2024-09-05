@@ -7,7 +7,7 @@ base_path = '/home/s2412003/Shared/JAIST_Cylinder'
 base_path = 'z:\\Shared\\JAIST_Cylinder'
 
 available_models = ['IMU', 'videos', 'both']
-which_model = 'both1'
+which_model = 'IMU'
 
 print(f'Using {which_model} model\n\n')
 
@@ -76,7 +76,7 @@ def plot_action_sequence(actions_start_end_list, length, saving_path):
     # Plot each action as a box on the same line
     for i, action_start_end in enumerate(actions_start_end_list):
         for action, start, end in action_start_end:
-            ax.barh(i, (end - start)/30.0, left=start/30.0, height=0.5, color=action_colors[action_names[action]], edgecolor='black', label=action_dict_inv[action])
+            ax.barh(i, (end - start)/30.0, left=start/30.0, height=0.5, color=action_colors[action_names[action]], edgecolor='black', label=action_dict_inv[action], linewidth=0.5)
 
     # Add labels and title
     ax.set_xlabel('Time')

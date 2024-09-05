@@ -127,6 +127,7 @@ class ImuDriver:
             # print(tmp, end='\r')
 
             # sensor_queue.put(tmp)
+
             # self.connectedIMUs[self.name_conversion[self.names[ID]]] = 1
             # self.msgCounter += 1
             # # print(self.msgCounter, end='\r')
